@@ -367,8 +367,7 @@
   /* ===================== SCREEN 5 — HOME SCREEN (grayscale cool-down) ===================== */
   #screen-homescreen{ padding-top:0; }
   .home-mockup{
-    position:relative; height:100%; padding:96px 24px 30px;
-    display:flex; flex-direction:column;
+    position:relative; height:100%; padding:92px 20px 26px;
     filter:grayscale(1);
     transition:filter 1.8s ease;
   }
@@ -381,23 +380,177 @@
       linear-gradient(160deg,#1B2440,#3A2E5C 85%);
   }
   .dim-note{
-    display:inline-flex; align-items:center; gap:6px; align-self:center;
+    display:flex; align-items:center; gap:6px;
+    width:-webkit-fit-content; width:fit-content; margin:0 auto 22px;
     font-size:11.5px; color:#F3F0E9;
     background:rgba(0,0,0,.35); backdrop-filter:blur(10px);
-    padding:7px 13px; border-radius:100px; margin-bottom:30px;
+    padding:7px 13px; border-radius:100px;
     transition:opacity 1s ease;
   }
   .home-mockup.color .dim-note{ opacity:0; }
   .dim-note .ddot{ width:6px; height:6px; border-radius:50%; background:#85C2A3; flex-shrink:0; }
-  .icon-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px 14px; }
-  .app-icon{ width:100%; aspect-ratio:1; border-radius:20px; background:var(--ic); position:relative; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+  .icon-grid{ display:flex; flex-wrap:wrap; justify-content:space-between; row-gap:18px; }
+  .app-icon{ width:58px; height:58px; border-radius:17px; background:var(--ic); position:relative; box-shadow:0 6px 16px rgba(0,0,0,.25); }
   .app-icon::after{ content:''; position:absolute; inset:26%; border-radius:6px; background:rgba(255,255,255,.5); }
   .dock{
-    margin-top:auto; display:flex; justify-content:space-around; align-items:center;
+    display:flex; justify-content:space-around; align-items:center;
     background:rgba(255,255,255,.12); backdrop-filter:blur(20px);
     border-radius:26px; padding:12px 16px;
   }
   .dock .app-icon{ width:46px; height:46px; flex-shrink:0; }
+
+
+  /* ---------- dot pattern (Magic UI) ---------- */
+  .dot-pattern{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(133,194,163,.20) 1px, transparent 1px);
+    background-size:18px 18px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%, #000 25%, transparent 70%);
+    mask-image:radial-gradient(ellipse at 50% 0%, #000 25%, transparent 70%);
+  }
+
+  /* ---------- border beam (Magic UI) ---------- */
+  @property --beam-angle{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+  .beam::after{
+    content:''; position:absolute; inset:-1px; border-radius:inherit; padding:1px;
+    background:conic-gradient(from var(--beam-angle), transparent 0deg, rgba(133,194,163,.85) 45deg, transparent 100deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:beamSpin 6s linear infinite; pointer-events:none; z-index:2;
+  }
+  @keyframes beamSpin{ to{ --beam-angle:360deg; } }
+
+  /* ---------- text generate (Aceternity) ---------- */
+  .tg > span{ display:inline-block; opacity:0; filter:blur(5px); }
+  .intercept-overlay.show .tg > span{ animation:tgIn .5s cubic-bezier(.22,1,.36,1) forwards; }
+  .tg > span:nth-child(1){ animation-delay:.10s } .tg > span:nth-child(2){ animation-delay:.17s }
+  .tg > span:nth-child(3){ animation-delay:.24s } .tg > span:nth-child(4){ animation-delay:.31s }
+  .tg > span:nth-child(5){ animation-delay:.38s } .tg > span:nth-child(6){ animation-delay:.45s }
+  .tg > span:nth-child(7){ animation-delay:.52s } .tg > span:nth-child(8){ animation-delay:.59s }
+  @keyframes tgIn{ to{ opacity:1; filter:blur(0); } }
+
+  /* ---------- scrollable screens ---------- */
+  .screen.scroll .screen-pad{ overflow-y:auto; scrollbar-width:none; }
+  .screen.scroll .screen-pad::-webkit-scrollbar{ display:none; }
+
+  /* ---------- theory tag -> expandable ---------- */
+  .theory-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .theory-row .theory-tag{ margin-bottom:0; }
+  .theory-tag .texpand{ font-size:12px; line-height:1; opacity:.7; margin-left:1px; font-weight:700; }
+  .theory-tag{ cursor:pointer; text-align:left; border:1px solid rgba(183,156,255,.26); transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+  .theory-tag:hover{ background:rgba(139,92,246,.28); border-color:rgba(183,156,255,.55); transform:translateY(-1px); }
+
+  /* ---------- theory modal ---------- */
+  .theory-modal{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0; z-index:80;
+    display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(4,8,6,0); backdrop-filter:blur(0px);
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, background .35s ease, backdrop-filter .35s ease, visibility 0s linear .35s;
+  }
+  .theory-modal.show{
+    opacity:1; visibility:visible; background:rgba(4,8,6,.6); backdrop-filter:blur(10px);
+    transition:opacity .35s ease, background .35s ease, backdrop-filter .35s ease;
+  }
+  .tm-card{
+    width:100%; max-height:86%; overflow-y:auto; scrollbar-width:none;
+    background:rgba(29,42,36,.94);
+    backdrop-filter:blur(26px) saturate(180%);
+    border-top:1px solid rgba(183,156,255,.32);
+    border-radius:28px 28px 0 0; padding:18px 22px 26px;
+    transform:translateY(100%); transition:transform .42s cubic-bezier(.2,.9,.25,1);
+  }
+  .tm-card::-webkit-scrollbar{ display:none; }
+  .theory-modal.show .tm-card{ transform:translateY(0); }
+  .tm-grip{ width:38px; height:4px; border-radius:3px; background:rgba(255,255,255,.18); margin:0 auto 14px; }
+  .tm-family{ font-size:10.5px; color:#B79CFF; letter-spacing:.07em; text-transform:uppercase; margin-bottom:5px; }
+  .tm-name{ font-family:var(--font-display); font-size:20px; font-weight:650; line-height:1.22; margin-bottom:15px; color:var(--text); }
+  .tm-sec{ margin-bottom:13px; }
+  .tm-h{ font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  .tm-p{ font-size:13px; line-height:1.55; color:var(--text); }
+  .tm-ev{ font-size:12px; line-height:1.5; color:#D3C4FF; background:rgba(139,92,246,.12); border-left:2px solid #B79CFF; padding:9px 11px; border-radius:0 10px 10px 0; margin-bottom:14px; }
+  .tm-close{ width:100%; padding:13px; border-radius:100px; background:rgba(255,255,255,.07); color:var(--text); font-size:14px; font-weight:550; }
+  .tm-close:hover{ background:rgba(255,255,255,.12); }
+
+  /* ---------- context / routine screen ---------- */
+  .sync-row{ display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:14px; background:rgba(133,194,163,.10); border:1px solid rgba(133,194,163,.22); margin-bottom:9px; }
+  .sync-row > svg{ width:16px; height:16px; flex-shrink:0; }
+  .sync-row .st{ font-size:11.5px; color:var(--subtext); line-height:1.4; }
+  .sync-row .st b{ color:var(--accent); font-weight:600; }
+  .live-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); position:relative; flex-shrink:0; margin:0 4px; }
+  .live-dot::after{ content:''; position:absolute; inset:-4px; border-radius:50%; border:1.5px solid var(--accent); animation:pulseRing 2s ease-out infinite; }
+  @keyframes pulseRing{ 0%{ transform:scale(.55); opacity:.75; } 100%{ transform:scale(1.5); opacity:0; } }
+
+  .tl{ position:relative; padding-left:17px; margin:14px 0 4px; }
+  .tl::before{ content:''; position:absolute; left:3px; top:8px; bottom:8px; width:2px; border-radius:2px; background:linear-gradient(180deg, rgba(133,194,163,.75), rgba(133,194,163,.10)); }
+  .tl-item{ position:relative; padding:7px 0 7px 13px; }
+  .tl-item::before{ content:''; position:absolute; left:-17.5px; top:13px; width:9px; height:9px; border-radius:50%; background:var(--surface-3); border:2px solid rgba(133,194,163,.5); }
+  .tl-item.now::before{ background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px rgba(133,194,163,.16); }
+  .tl-time{ font-size:10.5px; color:var(--faint); }
+  .tl-title{ font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
+  .tl-item.now .tl-title{ color:var(--accent); }
+  .tl-src{ display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--faint); margin-top:2px; }
+  .tl-src .sq{ width:6px; height:6px; border-radius:2px; flex-shrink:0; }
+
+  .scen-card{ width:100%; text-align:left; padding:13px 15px; border-radius:18px; margin-bottom:9px; display:flex; align-items:center; gap:11px;
+    background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09);
+    transition:transform .18s ease, border-color .18s ease, background .18s ease; }
+  .scen-card:hover{ transform:translateY(-2px); border-color:rgba(133,194,163,.45); background:rgba(48,68,58,.62); }
+  .scen-ic{ width:34px; height:34px; border-radius:11px; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .scen-ic svg{ width:17px; height:17px; color:var(--accent); }
+  .scen-t{ font-size:13px; font-weight:600; color:var(--text); }
+  .scen-s{ font-size:11px; color:var(--subtext); margin-top:1px; line-height:1.35; }
+  .scen-go{ margin-left:auto; color:var(--faint); font-size:16px; flex-shrink:0; }
+
+  /* ---------- intercept additions ---------- */
+  .ic-ctx{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--accent); background:var(--accent-dim); padding:4px 9px; border-radius:100px; margin-bottom:10px; }
+  .ic-ctx .sq{ width:6px; height:6px; border-radius:2px; background:var(--accent); flex-shrink:0; }
+  .ic-bar{ height:3px; border-radius:2px; background:rgba(255,255,255,.10); overflow:hidden; margin:2px 0 12px; }
+  .ic-bar i{ display:block; height:100%; width:0; background:var(--accent); border-radius:2px; }
+  .intercept-overlay.show .ic-bar i{ animation:icFill 10s linear forwards; }
+  @keyframes icFill{ to{ width:100%; } }
+  .ic-why{ display:flex; gap:8px; align-items:flex-start; font-size:11.5px; color:var(--subtext); line-height:1.45;
+    background:rgba(255,255,255,.05); padding:9px 11px; border-radius:12px; margin-bottom:14px; }
+  .ic-why svg{ width:13px; height:13px; color:var(--accent); flex-shrink:0; margin-top:1.5px; }
+  .ic-why b{ color:var(--text); font-weight:600; }
+
+  /* ---------- generic note card ---------- */
+  .note-card{ display:flex; gap:9px; align-items:flex-start; font-size:11.5px; color:var(--subtext); line-height:1.5;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); padding:11px 12px; border-radius:14px; margin-top:12px; }
+  .note-card svg{ width:14px; height:14px; color:var(--accent); flex-shrink:0; margin-top:1.5px; }
+  .note-card b{ color:var(--text); font-weight:600; }
+
+  /* ---------- chrome button cluster ---------- */
+  .chrome-right{ position:absolute; top:56px; right:22px; z-index:55; display:flex; gap:6px; }
+  .chip-btn{ font-size:11px; color:var(--subtext); padding:6px 10px; border-radius:20px; background:rgba(255,255,255,.06); white-space:nowrap; }
+  .chip-btn:hover{ color:var(--text); background:rgba(255,255,255,.11); }
+  .chip-btn.hidden{ display:none; }
+
+  .scope-note{ display:flex; gap:9px; align-items:flex-start; font-size:11px; line-height:1.5; color:rgba(255,255,255,.82);
+    background:rgba(0,0,0,.42); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.12);
+    padding:11px 12px; border-radius:14px; margin:16px 0 14px; }
+  .scope-note b{ color:#fff; font-weight:600; }
+  .scope-note .sdot{ width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:3px; }
+
+  .self-only{ display:none; }
+  .phone.scen-self .self-only{ display:flex; }
+
+  /* ---------- later-branch bars ---------- */
+  .later-row{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .later-row .lday{ font-size:11px; color:var(--subtext); width:52px; flex-shrink:0; }
+  .later-row .lpill{ flex:1; height:22px; border-radius:7px; background:rgba(255,255,255,.06); position:relative; overflow:hidden; }
+  .later-row .lpill i{ position:absolute; inset:0; width:0; background:rgba(255,107,107,.30); transition:width .7s ease; }
+  .revealed .later-row .lpill i{ width:100%; }
+  .later-row .lpill.done i{ background:rgba(133,194,163,.32); }
+  .later-row .lres{ position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:10.5px; color:var(--text); opacity:0; transition:opacity .4s ease .5s; }
+  .revealed .later-row .lres{ opacity:1; }
+
+  /* ---------- home screen app labels ---------- */
+  .app-tile{ width:22%; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .app-tile .lbl{ font-size:9.5px; color:rgba(255,255,255,.72); text-align:center; line-height:1.1; }
+  .app-icon{ position:relative; }
+  .app-icon .watch{ position:absolute; top:-3px; right:-3px; width:13px; height:13px; border-radius:50%; background:var(--accent); border:2px solid rgba(20,28,24,.9); display:flex; align-items:center; justify-content:center; }
+  .app-icon .watch::after{ content:''; width:4px; height:4px; border-radius:50%; background:var(--accent-ink); }
 
   @media (max-width:480px){
     body{ padding:0; align-items:stretch; }
@@ -430,9 +583,12 @@
     </div>
     <div class="island"></div>
     <div class="steps" id="steps">
-      <div class="dot" data-stage="0"></div><div class="dot" data-stage="1"></div><div class="dot" data-stage="2"></div><div class="dot" data-stage="3"></div><div class="dot" data-stage="4"></div><div class="dot" data-stage="5"></div>
+      <div class="dot" data-stage="0"></div><div class="dot" data-stage="1"></div><div class="dot" data-stage="2"></div><div class="dot" data-stage="3"></div><div class="dot" data-stage="4"></div><div class="dot" data-stage="5"></div><div class="dot" data-stage="6"></div>
     </div>
-    <button class="restart" id="restartBtn">Restart</button>
+    <div class="chrome-right">
+      <button class="chip-btn hidden" id="instructorBtn">Instructor</button>
+      <button class="chip-btn hidden" id="restartBtn">Restart</button>
+    </div>
     <button class="theory-toggle" id="theoryToggle" aria-pressed="false"><span class="ttoggle-dot"></span>Theory tags</button>
     <div class="home-indicator"></div>
 
@@ -469,12 +625,85 @@
           </div>
 
           <div class="spacer"></div>
-          <button class="primary-btn" data-goto="feed" data-stage="1">See it in action</button>
+          <button class="primary-btn" data-goto="context" data-stage="1">See it in action</button>
         </div>
       </section>
 
-      <!-- SCREEN 1: FEED / INTERCEPTION -->
-      <section class="screen" id="screen-feed" data-stage="1">
+
+      <!-- SCREEN 1: HOW TETHER KNOWS YOUR ROUTINE + SCENARIO PICKER -->
+      <section class="screen scroll" id="screen-context" data-stage="1">
+        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
+        <div class="dot-pattern"></div>
+        <div class="screen-pad">
+          <div class="eyebrow">Before it ever interrupts</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="context"><span class="tdot"></span>Context-Aware Triggering<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="implementation"><span class="tdot"></span>Implementation Intentions<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">Tether knows your week</h1>
+          <p class="sub">It never guesses at a good moment. Your routine comes from two places.</p>
+
+          <div class="sync-row">
+            <span class="live-dot"></span>
+            <div class="st"><b>Calendar synced</b> — institute timetable feed + your own Google Calendar, read-only.</div>
+          </div>
+          <div class="sync-row" style="background:rgba(111,168,220,.10); border-color:rgba(111,168,220,.22);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#6FA8DC" stroke-width="1.7"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/><path d="M12 7.5V12l3 1.8"/></svg>
+            <div class="st"><b style="color:#6FA8DC">Learned over 3 weeks</b> — blocks you reliably study in, even with nothing on the calendar.</div>
+          </div>
+
+          <div class="tl">
+            <div class="tl-item">
+              <div class="tl-time">08:30 — 10:00</div>
+              <div class="tl-title">Financial Institutions &amp; Markets</div>
+              <div class="tl-src"><span class="sq" style="background:#6FA8DC"></span>Institute timetable</div>
+            </div>
+            <div class="tl-item now">
+              <div class="tl-time">10:15 — 11:45 · happening now</div>
+              <div class="tl-title">Consumer Behaviour</div>
+              <div class="tl-src"><span class="sq" style="background:#6FA8DC"></span>Institute timetable</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">16:00 — 17:30</div>
+              <div class="tl-title">Self-study — you usually work here</div>
+              <div class="tl-src"><span class="sq" style="background:var(--accent)"></span>Learned pattern · 11 of the last 14 days</div>
+            </div>
+          </div>
+
+          <div class="note-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+            <div><b>You stay in charge.</b> Every block can be edited, muted or deleted. Tether reads the clock and which app is open — never what is on your screen.</div>
+          </div>
+
+          <p class="sub" style="margin:20px 0 8px;">Pick a moment to simulate:</p>
+
+          <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="class">
+            <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 4l9 3.5-9 3.5-9-3.5Z"/><path d="M7 10v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V10"/><path d="M21 7.5V13"/></svg></span>
+            <span>
+              <span class="scen-t">In a scheduled class</span>
+              <span class="scen-s">Tue 10:15 · Consumer Behaviour · from the timetable</span>
+            </span>
+            <span class="scen-go">→</span>
+          </button>
+
+          <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="self">
+            <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.5v5l3.2 1.9"/><circle cx="12" cy="12" r="8.5"/></svg></span>
+            <span>
+              <span class="scen-t">Outside class hours</span>
+              <span class="scen-s">Sun 16:00 · a study block you set yourself</span>
+            </span>
+            <span class="scen-go">→</span>
+          </button>
+
+          <div class="note-card" style="margin-bottom:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8.2v4.4M12 15.6v.2"/></svg>
+            <div>The check-in adapts to context — a self-set block surfaces <b>two extra options</b> that make no sense during a lecture.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: FEED / INTERCEPTION -->
+      <section class="screen" id="screen-feed" data-stage="2">
         <div class="app-topbar">
           <div class="app-wordmark"><span class="dot"></span>feed</div>
           <div class="topbar-icons">
@@ -544,52 +773,76 @@
         </div>
 
         <div class="intercept-overlay" id="interceptOverlay">
-          <div class="intercept-card">
+          <div class="intercept-card beam">
             <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
             <div class="tag"><span class="mark"></span> Tether</div>
-            <div class="theory-tag"><span class="tdot"></span>Cue–Routine–Reward Interception</div>
-            <h2>Before you scroll — 10 seconds?</h2>
-            <p>You opened this while your Consumer Behaviour session was still running.</p>
-            <button class="primary-btn" data-goto="checkin" data-stage="2">I need to breathe</button>
+            <div class="ic-ctx" id="icCtx"><span class="sq"></span>Consumer Behaviour · 10:15–11:45 · from your timetable</div>
+            <div class="theory-row">
+              <button class="theory-tag" data-theory="cue"><span class="tdot"></span>Cue–Routine–Reward Interception<span class="texpand">+</span></button>
+              <button class="theory-tag" data-theory="autonomy"><span class="tdot"></span>Autonomy &amp; Reactance<span class="texpand">+</span></button>
+            </div>
+            <h2 class="tg" id="icHead"><span>Ten</span> <span>seconds,</span> <span>then</span> <span>you're</span> <span>free</span> <span>to</span> <span>go.</span></h2>
+            <p id="icSub">You opened this while your Consumer Behaviour class was still running.</p>
+            <div class="ic-bar"><i></i></div>
+            <div class="ic-why">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/></svg>
+              <div><b>Tether never blocks or locks anything.</b> One tap tells us what you were feeling — then the feed is yours again, whatever you choose.</div>
+            </div>
+            <button class="primary-btn" data-goto="checkin" data-stage="3">I need to breathe</button>
           </div>
         </div>
       </section>
 
       <!-- SCREEN 2: CHECK-IN -->
-      <section class="screen" id="screen-checkin" data-stage="2">
+      <section class="screen" id="screen-checkin" data-stage="3">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#8FE0C0"></span><span class="blob b3" style="--blob:#6FA8DC"></span></div>
         <div class="screen-pad">
-          <div class="eyebrow">Quick check-in</div>
-          <div class="theory-tag"><span class="tdot"></span>Hook Model — Action (low friction)</div>
+          <div class="eyebrow" id="ckEyebrow">Quick check-in · Consumer Behaviour</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="hook"><span class="tdot"></span>Hook Model — Action<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="selfreport"><span class="tdot"></span>Self-Report as Intervention<span class="texpand">+</span></button>
+          </div>
           <h1 class="headline">What's pulling you right now?</h1>
-          <p class="sub">One tap — no explanation needed.</p>
+          <p class="sub">One tap. No typing, no judgement — this is the whole ask.</p>
           <div class="trigger-grid">
-            <button class="tap-card glass-surface" data-goto="branch-connection" data-stage="3" data-label="Feeling disconnected">
+            <button class="tap-card glass-surface" data-goto="branch-connection" data-stage="4" data-label="Feeling disconnected">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="9" r="3.2"/><circle cx="16" cy="9" r="3.2"/><path d="M3 19c.5-3 2.3-4.6 5-4.6s4.5 1.6 5 4.6"/><path d="M11 19c.5-3 2.3-4.6 5-4.6s4.5 1.6 5 4.6"/></svg>
               <span>Feeling disconnected</span>
             </button>
-            <button class="tap-card glass-surface" data-goto="branch-overcommit" data-stage="3" data-label="Lost track of time">
+            <button class="tap-card glass-surface" data-goto="branch-overcommit" data-stage="4" data-label="Lost track of time">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h10M7 21h10M7 3c0 4 2.5 5 5 8-2.5 3-5 4-5 8M17 3c0 4-2.5 5-5 8 2.5 3 5 4 5 8"/></svg>
               <span>Lost track of time</span>
             </button>
-            <button class="tap-card glass-surface" data-goto="branch-pacing" data-stage="3" data-label="This is dragging">
+            <button class="tap-card glass-surface" data-goto="branch-pacing" data-stage="4" data-label="This is dragging">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8c3-2 6 2 9 0s6-2 9 0"/><path d="M3 13c3-2 6 2 9 0s6-2 9 0"/><path d="M3 18c3-2 6 2 9 0s6-2 9 0"/></svg>
               <span>This is dragging</span>
             </button>
-            <button class="tap-card glass-surface" data-goto="branch-relevance" data-stage="3" data-label="Not sure this matters">
+            <button class="tap-card glass-surface" data-goto="branch-relevance" data-stage="4" data-label="Not sure this matters">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1.9-1.1 1.7"/><circle cx="12" cy="16.6" r=".4" fill="currentColor"/></svg>
               <span>Not sure this matters</span>
             </button>
+            <button class="tap-card glass-surface self-only" data-goto="branch-commitment" data-stage="4" data-label="Nothing's holding me to this">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.5 14.5 14.5 9.5"/><path d="M13 7.5l1.6-1.6a3.6 3.6 0 0 1 5.1 5.1L18 12.6"/><path d="M11 16.5l-1.6 1.6a3.6 3.6 0 0 1-5.1-5.1L6 11.4"/></svg>
+              <span>Nothing's holding me to this</span>
+            </button>
+            <button class="tap-card glass-surface self-only" data-goto="branch-later" data-stage="4" data-label="I'll just do it later">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-5h5"/><path d="M12 7.8V12l3 1.8"/></svg>
+              <span>I'll just do it later</span>
+            </button>
+          </div>
+          <div class="note-card" id="ckNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+            <div>Whatever you tap, the next screen is short and then Tether steps out. <b>Nothing here stops you returning to the feed.</b></div>
           </div>
         </div>
       </section>
 
       <!-- SCREEN 3a: CONNECTION -->
-      <section class="screen" id="screen-branch-connection" data-stage="3">
+      <section class="screen" id="screen-branch-connection" data-stage="4">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#5B93D6"></span><span class="blob b2" style="--blob:#7FA8E8"></span><span class="blob b3" style="--blob:#9FC0F2"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Feeling disconnected</div>
-          <div class="theory-tag"><span class="tdot"></span>Need for Belonging (FOMO)</div>
+          <button class="theory-tag" data-theory="belonging"><span class="tdot"></span>Need for Belonging (FOMO)<span class="texpand">+</span></button>
           <h1 class="headline">Your circle</h1>
           <p class="sub">A quick presence ping — no chat required.</p>
           <div class="branch-card glass-surface">
@@ -602,16 +855,16 @@
           </div>
           <div class="spacer"></div>
           <button class="primary-btn" data-action="reveal">Send a quick ping</button>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="4" style="display:none;" id="continue-connection">Continue</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-connection">Continue</button>
         </div>
       </section>
 
       <!-- SCREEN 3b: OVER-COMMIT -->
-      <section class="screen" id="screen-branch-overcommit" data-stage="3">
+      <section class="screen" id="screen-branch-overcommit" data-stage="4">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#7FC7A8"></span><span class="blob b3" style="--blob:#9EE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Lost track of time</div>
-          <div class="theory-tag"><span class="tdot"></span>Planning Fallacy</div>
+          <button class="theory-tag" data-theory="planning"><span class="tdot"></span>Planning Fallacy<span class="texpand">+</span></button>
           <h1 class="headline">How much is actually left?</h1>
           <p class="sub">Consumer Behaviour · Attitudes &amp; Persuasion</p>
           <div class="branch-card glass-surface">
@@ -622,16 +875,16 @@
           </div>
           <div class="spacer"></div>
           <button class="primary-btn" data-action="reveal">Start focused sprint</button>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="4" style="display:none;" id="continue-overcommit">Continue</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-overcommit">Continue</button>
         </div>
       </section>
 
       <!-- SCREEN 3c: PACING -->
-      <section class="screen" id="screen-branch-pacing" data-stage="3">
+      <section class="screen" id="screen-branch-pacing" data-stage="4">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#4FBF7C"></span><span class="blob b2" style="--blob:#79D69E"></span><span class="blob b3" style="--blob:#A0EEBE"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">This is dragging</div>
-          <div class="theory-tag"><span class="tdot"></span>Effort Perception &amp; Boredom</div>
+          <button class="theory-tag" data-theory="effort"><span class="tdot"></span>Effort Perception &amp; Boredom<span class="texpand">+</span></button>
           <h1 class="headline">Compress this section?</h1>
           <p class="sub">Same material, tighter pace.</p>
           <div class="branch-card glass-surface">
@@ -646,16 +899,16 @@
           </div>
           <div class="spacer"></div>
           <button class="primary-btn" data-action="reveal">Compress this section</button>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="4" style="display:none;" id="continue-pacing">Continue</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-pacing">Continue</button>
         </div>
       </section>
 
       <!-- SCREEN 3d: RELEVANCE -->
-      <section class="screen" id="screen-branch-relevance" data-stage="3">
+      <section class="screen" id="screen-branch-relevance" data-stage="4">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#7C82E0"></span><span class="blob b2" style="--blob:#9D8CE8"></span><span class="blob b3" style="--blob:#BCADF2"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Not sure this matters</div>
-          <div class="theory-tag"><span class="tdot"></span>Expectancy-Value Theory</div>
+          <button class="theory-tag" data-theory="expectancy"><span class="tdot"></span>Expectancy-Value Theory<span class="texpand">+</span></button>
           <h1 class="headline">Why this shows up</h1>
           <p class="sub">A concrete reason, not a slogan.</p>
           <div class="branch-card glass-surface">
@@ -668,16 +921,68 @@
           </div>
           <div class="spacer"></div>
           <button class="primary-btn" data-action="reveal">Got it, tag as important</button>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="4" style="display:none;" id="continue-relevance">Continue</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-relevance">Continue</button>
+        </div>
+      </section>
+
+
+      <!-- BRANCH 3e: COMMITMENT (self-study only) -->
+      <section class="screen" id="screen-branch-commitment" data-stage="4">
+        <div class="liquid-bg"><span class="blob b1" style="--blob:#C9A24B"></span><span class="blob b2" style="--blob:#DCC07A"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
+        <div class="screen-pad">
+          <div class="eyebrow">Nothing's holding me to this</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="commitment"><span class="tdot"></span>Commitment Devices<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="consistency"><span class="tdot"></span>Consistency Principle<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">You did set this, though</h1>
+          <p class="sub">Nobody assigned it. That's exactly why it's easy to drop.</p>
+          <div class="branch-card glass-surface">
+            <div class="branch-label">Your own commitment</div>
+            <div class="buddy-list">
+              <div class="buddy"><div class="initial">◷</div><div class="info"><div class="name">Sun 16:00 — 17:30</div><div class="status">CB reading · set by you on Thursday</div></div></div>
+              <div class="buddy"><div class="initial">P<span class="dotstat"></span></div><div class="info"><div class="name">Priya is in a block too</div><div class="status">until 17:00</div></div><div class="reaction">✳︎</div></div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Hold me to it</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-commitment">Continue</button>
+        </div>
+      </section>
+
+      <!-- BRANCH 3f: LATER (self-study only) -->
+      <section class="screen" id="screen-branch-later" data-stage="4">
+        <div class="liquid-bg"><span class="blob b1" style="--blob:#7C82E0"></span><span class="blob b2" style="--blob:#9D8CE8"></span><span class="blob b3" style="--blob:#BCADF2"></span></div>
+        <div class="screen-pad">
+          <div class="eyebrow">I'll just do it later</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="presentbias"><span class="tdot"></span>Present Bias<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="planningfallacy2"><span class="tdot"></span>Planning Fallacy<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">What "later" looked like</h1>
+          <p class="sub">Your last five, no commentary.</p>
+          <div class="branch-card glass-surface">
+            <div class="later-row"><div class="lday">Mon</div><div class="lpill"><i></i><span class="lres">moved to Tue</span></div></div>
+            <div class="later-row"><div class="lday">Tue</div><div class="lpill"><i></i><span class="lres">moved to Thu</span></div></div>
+            <div class="later-row"><div class="lday">Thu</div><div class="lpill done"><i></i><span class="lres">done — 40 min</span></div></div>
+            <div class="later-row"><div class="lday">Fri</div><div class="lpill"><i></i><span class="lres">didn't happen</span></div></div>
+            <div class="later-row"><div class="lday">Sat</div><div class="lpill"><i></i><span class="lres">didn't happen</span></div></div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Show me</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-later">Continue</button>
         </div>
       </section>
 
       <!-- SCREEN 7: DASHBOARD -->
-      <section class="screen" id="screen-dashboard" data-stage="4">
+      <section class="screen" id="screen-dashboard" data-stage="5">
         <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Your progress</div>
-          <div class="theory-tag"><span class="tdot"></span>Reinforcement — Streaks &amp; Variable Reward</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="reinforcement"><span class="tdot"></span>Reinforcement &amp; Variable Reward<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="overjustification"><span class="tdot"></span>Overjustification Risk<span class="texpand">+</span></button>
+          </div>
           <h1 class="headline">Back on track</h1>
           <div class="today-note" id="todayNote">Today's check-in: —</div>
           <div style="height:16px"></div>
@@ -704,7 +1009,12 @@
             </div>
           </div>
           <div class="spacer"></div>
-          <button class="primary-btn" data-goto="homescreen" data-stage="5">Close Tether</button>
+          <div class="note-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
+            <div><b>Next block:</b> Sun 16:00 self-study — learned, not assigned. <b>Edit or mute</b> any block from Settings.</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-goto="homescreen" data-stage="6">Close Tether</button>
           <button class="ghost-btn" data-goto="instructor" data-stage="-1">Instructor view (anonymized) →</button>
         </div>
       </section>
@@ -714,7 +1024,7 @@
         <div class="liquid-bg"><span class="blob b1" style="--blob:#6B93B0"></span><span class="blob b2" style="--blob:#8FADC2"></span><span class="blob b3" style="--blob:#5A7E99"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Instructor view</div>
-          <div class="theory-tag"><span class="tdot"></span>Behavioural Signal as Instructional Feedback</div>
+          <button class="theory-tag" data-theory="instructional"><span class="tdot"></span>Behavioural Signal as Feedback<span class="texpand">+</span></button>
           <h1 class="headline">This week's check-ins</h1>
           <p class="sub">Aggregated across the class · no individual data shown</p>
           <div class="branch-card glass-surface" style="margin-bottom:14px;">
@@ -730,37 +1040,54 @@
             <p style="font-size:13px;color:var(--text);line-height:1.55;">"Dragging" is the top trigger this week — worth a pacing check on Chapter 4.</p>
           </div>
           <div class="spacer"></div>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="4">← Back</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5">← Back</button>
         </div>
       </section>
 
-      <section class="screen" id="screen-homescreen" data-stage="5">
+      <section class="screen" id="screen-homescreen" data-stage="6">
         <div class="home-mockup" id="homeMockup">
           <div class="home-wallpaper"></div>
           <div class="dim-note"><span class="ddot"></span>Tether dimmed your colors — back to normal shortly</div>
           <div class="icon-grid">
-            <div class="app-icon" style="--ic:#FF6B6B"></div>
-            <div class="app-icon" style="--ic:#4ECDC4"></div>
-            <div class="app-icon" style="--ic:#5B7FFF"></div>
-            <div class="app-icon" style="--ic:#FFB84C"></div>
-            <div class="app-icon" style="--ic:#9B6BFF"></div>
-            <div class="app-icon" style="--ic:#3ED598"></div>
-            <div class="app-icon" style="--ic:#FF7AB6"></div>
-            <div class="app-icon" style="--ic:#4CC3FF"></div>
-            <div class="app-icon" style="--ic:#FFD166"></div>
-            <div class="app-icon" style="--ic:#8B5CF6"></div>
-            <div class="app-icon" style="--ic:#FF9257"></div>
-            <div class="app-icon" style="--ic:#57D6C7"></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF7AB6"><span class="watch"></span></div><div class="lbl">Feed</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#4ECDC4"></div><div class="lbl">Notes</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#5B7FFF"><span class="watch"></span></div><div class="lbl">Reels</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FFB84C"></div><div class="lbl">Calendar</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#9B6BFF"><span class="watch"></span></div><div class="lbl">Chat</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#3ED598"></div><div class="lbl">Docs</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF6B6B"><span class="watch"></span></div><div class="lbl">Clips</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#4CC3FF"></div><div class="lbl">Mail</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FFD166"></div><div class="lbl">Calc</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#8B5CF6"><span class="watch"></span></div><div class="lbl">Timeline</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF9257"></div><div class="lbl">Drive</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#57D6C7"></div><div class="lbl">Tether</div></div>
+          </div>
+          <div class="scope-note">
+            <span class="sdot"></span>
+            <div>Only the dotted apps are watched — feed-based social. <b>Notes, Mail, Docs and Calendar never trigger Tether</b>, even mid-class.</div>
           </div>
           <div class="dock">
-            <div class="app-icon" style="--ic:#FF6B6B"></div>
-            <div class="app-icon" style="--ic:#5B7FFF"></div>
+            <div class="app-icon" style="--ic:#FF7AB6"><span class="watch"></span></div>
+            <div class="app-icon" style="--ic:#5B7FFF"><span class="watch"></span></div>
             <div class="app-icon" style="--ic:#3ED598"></div>
-            <div class="app-icon" style="--ic:#FFB84C"></div>
+            <div class="app-icon" style="--ic:#4CC3FF"></div>
           </div>
         </div>
       </section>
 
+    </div>
+
+    <div class="theory-modal" id="theoryModal">
+      <div class="tm-card">
+        <div class="tm-grip"></div>
+        <div class="tm-family" id="tmFamily"></div>
+        <div class="tm-name" id="tmName"></div>
+        <div class="tm-sec"><div class="tm-h">What the theory says</div><div class="tm-p" id="tmWhat"></div></div>
+        <div class="tm-sec"><div class="tm-h">How Tether applies it</div><div class="tm-p" id="tmHow"></div></div>
+        <div class="tm-sec"><div class="tm-h">Why it should change behaviour</div><div class="tm-p" id="tmWhy"></div></div>
+        <div class="tm-ev" id="tmEv"></div>
+        <button class="tm-close" id="tmClose">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -770,6 +1097,7 @@
   var screens = document.querySelectorAll('.screen');
   var dots = document.querySelectorAll('.dot');
   var restartBtn = document.getElementById('restartBtn');
+  var instructorBtn = document.getElementById('instructorBtn');
   var interceptOverlay = document.getElementById('interceptOverlay');
   var todayNote = document.getElementById('todayNote');
   var doubleTapMedia = document.getElementById('doubleTapMedia');
@@ -777,20 +1105,213 @@
   var theoryToggle = document.getElementById('theoryToggle');
   var phoneEl = document.querySelector('.phone');
   var homeMockup = document.getElementById('homeMockup');
-  var interceptTimer = null;
-  var colorTimer = null;
+  var interceptTimer = null, colorTimer = null;
+  var lastStage = 1;
 
+  /* ---------------- theory library ---------------- */
+  var THEORY = {
+    context: {
+      family: 'Behavioural Design',
+      name: 'Context-Aware Triggering',
+      what: 'An intervention only works if it arrives at the decision point. Generic reminders fire when nothing is happening, so people learn to dismiss them without reading — the notification becomes noise.',
+      how: 'Tether reads two sources: the institute timetable / calendar feed, and a three-week learned pattern of when you actually study. It stays silent outside those windows.',
+      why: 'A prompt that only ever appears during a block you already committed to keeps its meaning. Dismissal becomes a signal rather than a reflex.',
+      ev: 'Survey (N=27): 78% hit unplanned Instagram use weekly or more — but only inside study time. The trigger has to be scoped to that, or it punishes ordinary phone use.'
+    },
+    implementation: {
+      family: 'Goal Pursuit',
+      name: 'Implementation Intentions',
+      what: 'Gollwitzer\u2019s work: goals framed as "when situation X arises, I will do Y" are acted on far more often than open-ended intentions like "I should study more".',
+      how: 'Every block in Tether is an if-then in disguise: when 10:15 Tuesday arrives, CB is the plan. The self-study blocks the app learns become the same structure without you writing it.',
+      why: 'The decision is pre-made at a calm moment, so the tired 11pm version of you is executing a plan rather than negotiating one.',
+      ev: 'Survey: 48% never estimate session length and 33% underestimate — the plan mostly does not exist to begin with.'
+    },
+    cue: {
+      family: 'Habit Formation',
+      name: 'Cue–Routine–Reward Interception',
+      what: 'Habits run as a loop: a cue fires, a routine executes automatically, a reward lands and strengthens the loop. Because the routine is automatic, willpower applied after it starts is usually too late.',
+      how: 'Tether inserts itself between the cue (fatigue, boredom, disconnection during a study block) and the routine (opening the feed). The card appears as the feed loads — the last moment the loop is still interruptible.',
+      why: 'You are not asking the student to resist a running habit; you are giving a competing behaviour a chance to start at all.',
+      ev: 'Survey: 67% said "guilt / realising time passed" is the only thing that ever pulls them back — awareness that arrives far too late. Tether supplies it early.'
+    },
+    autonomy: {
+      family: 'Motivation / Self-Determination',
+      name: 'Autonomy & Psychological Reactance',
+      what: 'Reactance theory (Brehm): when people feel a freedom is being removed, they push back — often by doing the restricted thing harder. Blockers and lockouts reliably produce workarounds and uninstalls.',
+      how: 'Tether never blocks, locks, or hides anything. It asks one question for ten seconds and then gets out of the way. The feed is still there and the student may absolutely go back to it.',
+      why: 'Preserving autonomy keeps the tool something students choose to keep installed. An app that is deleted in week two changes no behaviour at all.',
+      ev: 'Survey quote: "I love my phone" — not everyone frames this as a problem to be policed. A restrictive tool would lose that student immediately.'
+    },
+    hook: {
+      family: 'Habit Formation',
+      name: 'Hook Model — Action Stage',
+      what: 'Nir Eyal\u2019s Hook Model: Trigger \u2192 Action \u2192 Variable Reward \u2192 Investment. The Action must be the simplest possible behaviour in anticipation of the reward — every unit of friction loses users.',
+      how: 'The check-in is one tap on four (or six) large targets. No typing, no login, no scale from 1 to 10, no explanation required.',
+      why: 'A student who is already tired and mid-escape will abandon anything effortful. One tap is cheap enough to survive that moment.',
+      ev: 'Survey: 44% cite plain tiredness as the trigger. Any interface demanding real cognitive effort at that point simply gets dismissed.'
+    },
+    selfreport: {
+      family: 'Self-Regulation',
+      name: 'Self-Report as Intervention',
+      what: 'Naming an internal state changes it. Labelling an emotion or motive engages deliberate processing (System 2) and briefly interrupts automatic behaviour — the act of reporting is itself the intervention.',
+      how: 'Tether does not diagnose you. It asks what you were feeling and you answer in one tap. The answer routes the response, but the naming has already done work.',
+      why: 'This is why the app asks rather than blocks: the question creates the pause, and the student stays the expert on their own state.',
+      ev: 'The same mechanism explains why guilt (67%) works at all — it is self-noticing. Tether just moves that noticing 20 minutes earlier.'
+    },
+    belonging: {
+      family: 'Social Motivation',
+      name: 'Need for Belonging (FOMO)',
+      what: 'Belonging is a fundamental need, not a weakness. Feeling out of the loop produces genuine discomfort, and social media is the lowest-cost way to relieve it.',
+      how: 'Instead of denying the need, Tether satisfies it through a cheaper channel: a presence ping showing which friends are also in a study block right now. No chat, no feed, no scroll.',
+      why: 'Blocking access leaves the need unmet and the discomfort intact, so the student routes around the block. Meeting it in ten seconds removes the reason to scroll for twenty minutes.',
+      ev: 'Survey: 26% named "knowing a friend is also studying right now" as something that has genuinely pulled them back — equal to a friend actively messaging them.'
+    },
+    planning: {
+      family: 'Cognitive Bias',
+      name: 'Planning Fallacy',
+      what: 'Kahneman & Tversky: people systematically underestimate how long their own tasks will take, even when they have done the same task before and know they ran over.',
+      how: 'The branch surfaces a concrete estimate for what is actually left, derived from the student\u2019s own past sessions on similar material — not an optimistic guess.',
+      why: 'The "quick break" is affordable only if you believe there is slack later. Correcting the estimate removes the justification before it forms.',
+      ev: 'Strongest finding in the survey: 81% either never estimate (48%) or habitually underestimate (33%), and 70% take a "quick" break that runs long.'
+    },
+    planningfallacy2: {
+      family: 'Cognitive Bias',
+      name: 'Planning Fallacy (recall version)',
+      what: 'The bias survives experience because we remember intentions, not outcomes. Asked to plan, people simulate the ideal run of the task and quietly discard the times it went wrong.',
+      how: 'Rather than argue, Tether shows the record: the last five times this block was postponed and what actually happened to each one.',
+      why: 'Reference-class information — your own history, unedited — is the standard correction for this bias. It is far harder to dismiss than advice.',
+      ev: 'Survey: 70% recognise the "quick break that gets long" pattern in themselves, yet it repeats. Recognition alone is clearly not enough; the record is.'
+    },
+    effort: {
+      family: 'Attention & Effort',
+      name: 'Effort Perception & Boredom',
+      what: 'Disengagement often tracks pacing rather than interest. Content that feels slow drains attention even when the student genuinely cares about the subject.',
+      how: 'The branch offers a one-tap compression of the current section — same material, tighter delivery — so boredom has an exit that is not the phone.',
+      why: 'If the only escape from a slow section is Instagram, students will keep taking it. Give the escape a destination inside the work.',
+      ev: 'Survey: 37% named pacing ("the topic feels slow or repetitive") as their trigger — the second largest cause, and one no motivational appeal fixes.'
+    },
+    expectancy: {
+      family: 'Motivation',
+      name: 'Expectancy-Value Theory',
+      what: 'Motivation is a product of expectancy (can I do this?) and value (is it worth it?). If perceived value is near zero, effort follows regardless of ability or discipline.',
+      how: 'The branch supplies one concrete, verifiable reason this specific topic matters — appearance in past assessments, or a direct tie to work the student already cares about.',
+      why: 'Restoring perceived value addresses the actual cause. Telling a student to focus harder on something they have judged worthless does not.',
+      ev: 'Survey: 89% report engaging differently with interesting versus obligatory topics — 59% call the difference large. Engagement is conditional, not constant.'
+    },
+    commitment: {
+      family: 'Behavioural Economics',
+      name: 'Commitment Devices',
+      what: 'A commitment device is a constraint your present self accepts to bind your future self. It works precisely because it is chosen in advance, at a moment of clear thinking.',
+      how: 'Outside class hours there is no institution holding the student to anything, so Tether surfaces the commitment they made themselves — when they set it, and who else is in a block right now.',
+      why: 'Self-set blocks collapse first because nothing external defends them. Making the earlier choice visible restores some of that structure without an authority imposing it.',
+      ev: 'This branch only appears outside timetabled hours — in a lecture the institution is already the commitment device.'
+    },
+    consistency: {
+      family: 'Social Influence',
+      name: 'Consistency Principle',
+      what: 'Cialdini: once people make a choice, they experience pressure to behave consistently with it. Written or witnessed commitments hold considerably better than private ones.',
+      how: 'The block is shown as something the student actively scheduled on a named day, not as a generic reminder — and optionally as visible to two study-circle friends.',
+      why: 'Framing the session as keeping your own word converts an abstract task into a consistency question, which is a stronger motivator for most people.',
+      ev: 'Paired deliberately with a light social signal, never a public leaderboard — see the Overjustification note on the dashboard.'
+    },
+    presentbias: {
+      family: 'Behavioural Economics',
+      name: 'Present Bias / Temporal Discounting',
+      what: 'People steeply discount future rewards relative to immediate ones. "Later" feels costless because the cost is paid by a future self who is not present to object.',
+      how: 'Tether makes the future self concrete by showing what the last five "laters" turned into — a record, presented flatly, with no lecture attached.',
+      why: 'The bias survives on vagueness. Specific, personal evidence that later usually means never is the most direct correction available.',
+      ev: 'Survey: 70% say a "quick" break routinely runs long — the immediate option winning over the delayed one, repeatedly and predictably.'
+    },
+    reinforcement: {
+      family: 'Learning Theory',
+      name: 'Reinforcement & Variable Reward',
+      what: 'Behaviour followed by reward repeats. Skinner further showed that unpredictable (intermittent) reward sustains behaviour more durably than a fixed reward every time.',
+      how: 'The streak reinforces each successful redirect. Variability sits at the system level — which branch fires, and therefore which response you get, depends on the trigger, so the experience is never identical.',
+      why: 'A single successful redirect changes nothing. What matters is whether the loop survives across weeks, which is what reinforcement is for.',
+      ev: 'Honest caveat: a streak only reinforces if losing it feels costly. Loss aversion is doing the work, not the number itself.'
+    },
+    overjustification: {
+      family: 'Motivation',
+      name: 'Overjustification Effect',
+      what: 'Introducing external rewards for a behaviour can crowd out intrinsic motivation — once the reward stops, the behaviour often drops below its original level.',
+      how: 'Tether deliberately uses feedback (estimate accuracy, relevance map, presence) rather than prizes (points, badges, coins, leaderboards). Nothing is unlockable.',
+      why: 'Information about yourself supports intrinsic motivation; trophies substitute for it. The aim is a student who eventually does not need the app.',
+      ev: 'Stated as a design risk in the report rather than hidden — the one metric that tests it is redirect success on sessions where the streak has already broken.'
+    },
+    instructional: {
+      family: 'Systems / Feedback Loops',
+      name: 'Behavioural Signal as Instructional Feedback',
+      what: 'Aggregate behaviour carries information no individual interaction reveals. Patterns across a cohort can point at the environment rather than the individual.',
+      how: 'Check-in selections are aggregated anonymously into an instructor view. A spike in "this is dragging" during one chapter is a pacing signal about the material, not a discipline problem in students.',
+      why: 'It closes a second loop — student behaviour informing instructional design — and gives faculty a reason to support adoption.',
+      ev: 'Anonymisation is load-bearing: if answers were attributable, honest self-report would stop immediately and the signal would be worthless.'
+    }
+  };
+
+  /* ---------------- theory modal ---------------- */
+  var modal = document.getElementById('theoryModal');
+  function openTheory(key){
+    var t = THEORY[key];
+    if(!t) return;
+    document.getElementById('tmFamily').textContent = t.family;
+    document.getElementById('tmName').textContent = t.name;
+    document.getElementById('tmWhat').textContent = t.what;
+    document.getElementById('tmHow').textContent = t.how;
+    document.getElementById('tmWhy').textContent = t.why;
+    document.getElementById('tmEv').textContent = t.ev;
+    modal.querySelector('.tm-card').scrollTop = 0;
+    modal.classList.add('show');
+  }
+  function closeTheory(){ modal.classList.remove('show'); }
+  document.addEventListener('click', function(e){
+    var tag = e.target.closest('.theory-tag');
+    if(tag){ e.preventDefault(); e.stopPropagation(); openTheory(tag.dataset.theory); return; }
+  });
+  document.getElementById('tmClose').addEventListener('click', closeTheory);
+  modal.addEventListener('click', function(e){ if(e.target === modal) closeTheory(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTheory(); });
+
+  /* ---------------- scenario ---------------- */
+  var SCEN = {
+    class: {
+      ctx: 'Consumer Behaviour · 10:15–11:45 · from your timetable',
+      sub: 'You opened this while your Consumer Behaviour class was still running.',
+      eyebrow: 'Quick check-in · Consumer Behaviour'
+    },
+    self: {
+      ctx: 'Self-study block · 16:00–17:30 · a block you set yourself',
+      sub: 'You opened this during a study block you scheduled for yourself on Thursday.',
+      eyebrow: 'Quick check-in · your own study block'
+    }
+  };
+  function setScenario(key){
+    var s = SCEN[key]; if(!s) return;
+    phoneEl.classList.toggle('scen-self', key === 'self');
+    var ctx = document.getElementById('icCtx');
+    var sub = document.getElementById('icSub');
+    var eb  = document.getElementById('ckEyebrow');
+    if(ctx) ctx.lastChild.textContent = s.ctx;
+    if(sub) sub.textContent = s.sub;
+    if(eb) eb.textContent = s.eyebrow;
+  }
+
+  /* ---------------- navigation ---------------- */
   function setStage(stage){
-    dots.forEach(function(d){ d.classList.toggle('active', Number(d.dataset.stage) === Number(stage)); });
-    restartBtn.classList.toggle('show', Number(stage) !== 0);
+    var n = Number(stage);
+    dots.forEach(function(d){ d.classList.toggle('active', Number(d.dataset.stage) === n); });
+    restartBtn.classList.toggle('hidden', n === 0);
+    instructorBtn.classList.toggle('hidden', n === 0 || n === -1);
   }
 
   function goto(id, stage){
+    closeTheory();
     screens.forEach(function(s){ s.classList.remove('active'); });
     var target = document.getElementById('screen-' + id);
     if(target){ target.classList.add('active'); }
+    if(Number(stage) !== -1){ lastStage = Number(stage); }
     setStage(stage);
     phoneEl.classList.toggle('on-feed', id === 'feed');
+
     clearTimeout(interceptTimer);
     interceptOverlay.classList.remove('show');
     if(id === 'feed'){
@@ -809,14 +1330,11 @@
     theoryToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 
-  goto('intro', 0);
-
   document.querySelectorAll('[data-goto]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var id = btn.dataset.goto;
-      var stage = btn.dataset.stage;
+      if(btn.dataset.scenario){ setScenario(btn.dataset.scenario); }
       if(btn.dataset.label){ todayNote.textContent = "Today's check-in: " + btn.dataset.label; }
-      goto(id, stage);
+      goto(btn.dataset.goto, btn.dataset.stage);
     });
   });
 
@@ -828,6 +1346,14 @@
       var cont = screen.querySelector('.ghost-btn[data-goto]');
       if(cont){ cont.style.display = 'block'; }
     });
+  });
+
+  instructorBtn.addEventListener('click', function(){
+    if(document.getElementById('screen-instructor').classList.contains('active')){
+      goto('dashboard', lastStage === -1 ? 5 : lastStage);
+    } else {
+      goto('instructor', -1);
+    }
   });
 
   if(doubleTapMedia){
@@ -848,12 +1374,13 @@
     document.querySelectorAll('[data-action="reveal"]').forEach(function(b){ b.style.display = 'flex'; });
     document.querySelectorAll('.ghost-btn[data-goto]').forEach(function(b){ b.style.display = 'none'; });
     todayNote.textContent = "Today's check-in: —";
+    lastStage = 1;
     goto('intro', 0);
   }
-
   restartBtn.addEventListener('click', resetAll);
 
-  setStage(0);
+  setScenario('class');
+  goto('intro', 0);
 })();
 </script>
 
