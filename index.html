@@ -169,7 +169,7 @@
   .phone.theory-on .theory-tag{ display:inline-flex; }
 
   /* ---------- screens ---------- */
-  .screens{ position:relative; width:100%; height:100%; }
+  .screens{ position:relative; width:100%; height:100%; z-index:1; }
   .screen{
     position:absolute; inset:0;
     padding:98px 0 0;
@@ -492,15 +492,18 @@
   .tl-src{ display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--faint); margin-top:2px; }
   .tl-src .sq{ width:6px; height:6px; border-radius:2px; flex-shrink:0; }
 
-  .scen-card{ width:100%; text-align:left; padding:13px 15px; border-radius:18px; margin-bottom:9px; display:flex; align-items:center; gap:11px;
+  .scen-card{ width:100%; text-align:left; padding:18px 18px; border-radius:22px; margin-bottom:12px;
+    min-height:82px; display:flex; align-items:center; gap:14px;
     background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09);
     transition:transform .18s ease, border-color .18s ease, background .18s ease; }
-  .scen-card:hover{ transform:translateY(-2px); border-color:rgba(133,194,163,.45); background:rgba(48,68,58,.62); }
-  .scen-ic{ width:34px; height:34px; border-radius:11px; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .scen-ic svg{ width:17px; height:17px; color:var(--accent); }
-  .scen-t{ font-size:13px; font-weight:600; color:var(--text); }
-  .scen-s{ font-size:11px; color:var(--subtext); margin-top:1px; line-height:1.35; }
-  .scen-go{ margin-left:auto; color:var(--faint); font-size:16px; flex-shrink:0; }
+  .scen-card:hover{ transform:translateY(-2px); border-color:rgba(133,194,163,.5); background:rgba(48,68,58,.66); }
+  .scen-card:active{ transform:translateY(0) scale(.985); }
+  .scen-ic{ width:46px; height:46px; border-radius:15px; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .scen-ic svg{ width:22px; height:22px; color:var(--accent); }
+  .scen-txt{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .scen-t{ font-size:15px; font-weight:650; color:var(--text); line-height:1.25; }
+  .scen-s{ font-size:12px; color:var(--subtext); line-height:1.4; }
+  .scen-go{ margin-left:auto; color:var(--faint); font-size:19px; flex-shrink:0; }
 
   /* ---------- intercept additions ---------- */
   .ic-ctx{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--accent); background:var(--accent-dim); padding:4px 9px; border-radius:100px; margin-bottom:10px; }
@@ -552,6 +555,205 @@
   .app-icon .watch{ position:absolute; top:-3px; right:-3px; width:13px; height:13px; border-radius:50%; background:var(--accent); border:2px solid rgba(20,28,24,.9); display:flex; align-items:center; justify-content:center; }
   .app-icon .watch::after{ content:''; width:4px; height:4px; border-radius:50%; background:var(--accent-ink); }
 
+
+  /* ============ LIVE AMBIENT BACKGROUND (persists across every screen) ============ */
+  .amb{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0;
+    z-index:0; overflow:hidden; pointer-events:none; border-radius:inherit;
+  }
+  .amb-blob{
+    position:absolute; border-radius:50%;
+    filter:blur(52px); mix-blend-mode:screen;
+    transition:background-color 1.5s ease;
+    will-change:transform, opacity;
+  }
+  .amb-blob.a1{ width:280px; height:280px; top:-70px; left:-80px;
+    background-color:var(--b1,#5FA890); animation:ambDrift1 15s ease-in-out infinite; }
+  .amb-blob.a2{ width:240px; height:240px; bottom:-60px; right:-50px;
+    background-color:var(--b2,#6FA8DC); animation:ambDrift2 19s ease-in-out infinite; }
+  .amb-blob.a3{ width:200px; height:200px; top:30%; right:-60px;
+    background-color:var(--b3,#8FE0C0); animation:ambDrift3 17s ease-in-out infinite; }
+  .amb-blob.a4{ width:190px; height:190px; bottom:20%; left:-60px;
+    background-color:var(--b4,#4E9AA8); animation:ambDrift4 21s ease-in-out infinite; }
+
+  /* large amplitude + opacity swing so the motion is actually readable through the blur */
+  @keyframes ambDrift1{
+    0%{   transform:translate(0,0) scale(1);            opacity:.50 }
+    25%{  transform:translate(150px,90px) scale(1.34);  opacity:.62 }
+    50%{  transform:translate(60px,250px) scale(.74);   opacity:.34 }
+    75%{  transform:translate(-40px,120px) scale(1.18); opacity:.56 }
+    100%{ transform:translate(0,0) scale(1);            opacity:.50 }
+  }
+  @keyframes ambDrift2{
+    0%{   transform:translate(0,0) scale(1);              opacity:.44 }
+    27%{  transform:translate(-140px,-110px) scale(1.3);  opacity:.58 }
+    54%{  transform:translate(-50px,-260px) scale(.72);   opacity:.28 }
+    80%{  transform:translate(90px,-80px) scale(1.2);     opacity:.50 }
+    100%{ transform:translate(0,0) scale(1);              opacity:.44 }
+  }
+  @keyframes ambDrift3{
+    0%{   transform:translate(0,0) scale(1);             opacity:.34 }
+    30%{  transform:translate(-170px,130px) scale(1.42); opacity:.50 }
+    62%{  transform:translate(-70px,-150px) scale(.68);  opacity:.22 }
+    100%{ transform:translate(0,0) scale(1);             opacity:.34 }
+  }
+  @keyframes ambDrift4{
+    0%{   transform:translate(0,0) scale(1);            opacity:.30 }
+    35%{  transform:translate(160px,-120px) scale(1.3); opacity:.46 }
+    68%{  transform:translate(60px,110px) scale(.74);   opacity:.20 }
+    100%{ transform:translate(0,0) scale(1);            opacity:.30 }
+  }
+
+  /* slow rotating wash — adds visible movement even where blobs overlap */
+  .amb-sweep{
+    position:absolute; top:-40%; left:-40%; width:180%; height:180%;
+    background:conic-gradient(from 0deg,
+      transparent 0deg,
+      var(--b3,#8FE0C0) 55deg,
+      transparent 130deg,
+      var(--b2,#6FA8DC) 215deg,
+      transparent 300deg);
+    filter:blur(64px); opacity:.16; mix-blend-mode:screen;
+    animation:ambSweep 34s linear infinite;
+    transition:opacity 1.5s ease;
+  }
+  @keyframes ambSweep{ to{ transform:rotate(360deg); } }
+  .phone.on-feed .amb-sweep{ opacity:.24; }
+
+  .amb-grain{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0;
+    background-image:radial-gradient(rgba(255,255,255,.42) 1px, transparent 1px);
+    background-size:3px 3px; opacity:.035; mix-blend-mode:overlay;
+  }
+  /* the feed is meant to feel loud — let the ambience run hotter and faster there */
+  .phone.on-feed .amb-blob{ filter:blur(60px); }
+
+  /* ============ IDLE MOTION ============ */
+  @keyframes idleBreath{
+    0%,100%{ box-shadow:0 10px 26px rgba(111,168,147,.26); transform:translateY(0); }
+    50%{ box-shadow:0 14px 36px rgba(133,194,163,.46); transform:translateY(-1.5px); }
+  }
+  .primary-btn{ animation:idleBreath 4.6s ease-in-out infinite; }
+  .primary-btn:hover, .primary-btn:active{ animation-play-state:paused; }
+
+  @keyframes sheen{
+    0%{ left:-65%; } 52%{ left:125%; } 100%{ left:125%; }
+  }
+  .tap-card, .scen-card, .branch-card, .dash-card, .compare-panel{ position:relative; overflow:hidden; }
+  .tap-card::after, .scen-card::after, .branch-card::after, .dash-card::after{
+    content:''; position:absolute; top:0; left:-65%; width:42%; height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,.075), transparent);
+    pointer-events:none; z-index:1;
+    animation:sheen 8.5s ease-in-out infinite;
+  }
+  .tap-card:nth-child(2)::after{ animation-delay:1.1s }
+  .tap-card:nth-child(3)::after{ animation-delay:2.2s }
+  .tap-card:nth-child(4)::after{ animation-delay:3.3s }
+  .tap-card:nth-child(5)::after{ animation-delay:4.4s }
+  .tap-card:nth-child(6)::after{ animation-delay:5.5s }
+  .scen-card:nth-child(even)::after{ animation-delay:2.4s }
+  .dash-card::after{ animation-duration:11s; }
+  .branch-card::after{ animation-duration:10s; animation-delay:.8s; }
+
+  @keyframes tdotPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(183,156,255,.55); }
+    55%{ box-shadow:0 0 0 4.5px rgba(183,156,255,0); }
+  }
+  .theory-tag .tdot{ animation:tdotPulse 3.2s ease-in-out infinite; }
+
+  @keyframes iconFloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-2px) } }
+  .tap-card svg, .scen-ic{ animation:iconFloat 5.4s ease-in-out infinite; }
+  .tap-card:nth-child(even) svg{ animation-delay:1.6s }
+
+  @keyframes flowPulse{ 0%,100%{ opacity:.55 } 50%{ opacity:1 } }
+  .compare-panel .flow-arrow{ animation:flowPulse 3.4s ease-in-out infinite; }
+  .compare-panel .flow-arrow:nth-of-type(2){ animation-delay:.7s }
+
+  /* ============ PAX VEIL (closing beat) ============ */
+  .pax-veil{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0; z-index:75;
+    display:flex; align-items:center; justify-content:center;
+    background:#070B09;
+    opacity:0; visibility:hidden;
+    transition:opacity 1.5s ease, visibility 0s linear 1.5s;
+  }
+  .pax-veil.show{ opacity:1; visibility:visible; transition:opacity .75s ease; }
+  .pax-inner{ text-align:center; padding:0 40px; }
+  .pax-mark{
+    width:30px; height:30px; margin:0 auto 22px; border-radius:50%;
+    border:1px solid rgba(133,194,163,.55); position:relative;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-mark::after{
+    content:''; position:absolute; inset:8px; top:8px; right:8px; bottom:8px; left:8px;
+    border-radius:50%; background:var(--accent); opacity:.85;
+  }
+  .pax-lat{
+    font-family:var(--font-display); font-size:21px; font-weight:600;
+    letter-spacing:.01em; color:#E9F1EB; margin-bottom:7px;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-en{
+    font-size:13px; color:#7E948A; letter-spacing:.02em;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-veil.show .pax-mark{ animation:paxIn 1.1s cubic-bezier(.22,1,.36,1) .25s forwards; }
+  .pax-veil.show .pax-lat{ animation:paxIn 1.2s cubic-bezier(.22,1,.36,1) .55s forwards; }
+  .pax-veil.show .pax-en{ animation:paxIn 1.2s cubic-bezier(.22,1,.36,1) .95s forwards; }
+  @keyframes paxIn{ from{ opacity:0; transform:translateY(7px); filter:blur(5px); } to{ opacity:1; transform:translateY(0); filter:blur(0); } }
+  .pax-veil .pax-glow{
+    position:absolute; width:260px; height:260px; border-radius:50%;
+    background:var(--accent); filter:blur(90px); opacity:.10;
+    animation:paxBreathe 7s ease-in-out infinite;
+  }
+  @keyframes paxBreathe{ 0%,100%{ transform:scale(1); opacity:.08 } 50%{ transform:scale(1.18); opacity:.15 } }
+
+
+  /* ---------- instructor view ---------- */
+  .ins-stats{ display:flex; gap:9px; margin-bottom:14px; }
+  .ins-stat{ flex:1; padding:11px 10px; border-radius:16px; text-align:center;
+    background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09); }
+  .ins-stat .isv{ font-family:var(--font-display); font-size:19px; font-weight:650; color:var(--text); line-height:1.1; }
+  .ins-stat .isl{ font-size:10px; color:var(--faint); margin-top:3px; }
+  .bar-pct{ font-size:11px; color:var(--subtext); width:32px; text-align:right; flex-shrink:0; }
+
+  .trend{ margin-top:2px; }
+  .trend-svg{ width:100%; height:92px; display:block; }
+  .tgrid{ stroke:rgba(255,255,255,.06); stroke-width:1; }
+  .tarea{ fill:rgba(133,194,163,.13); }
+  .tline{ fill:none; stroke:var(--accent); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .tdotpt{ fill:var(--surface-2); stroke:var(--accent); stroke-width:2; }
+  .tdotpt.last{ fill:var(--accent); }
+  .trend-x{ display:flex; justify-content:space-between; margin-top:5px; padding:0 2px; }
+  .trend-x span{ font-size:9.5px; color:var(--faint); }
+  .trend-note{ font-size:11.5px; color:var(--subtext); margin-top:10px; line-height:1.45; }
+  .trend-note .up{ color:#E8A87C; font-weight:600; }
+
+
+  /* ---------- context-conditional blocks ---------- */
+  .ctx-self{ display:none; }
+  .phone.scen-self .ctx-self{ display:block; }
+  .phone.scen-self .ctx-class{ display:none; }
+  .phone.theory-on .theory-tag.ctx-self{ display:none; }
+  .phone.scen-self.theory-on .theory-tag.ctx-self{ display:inline-flex; }
+
+  .ping-out{ display:flex; gap:8px; align-items:flex-start; font-size:11.5px; line-height:1.45; color:var(--subtext);
+    background:rgba(133,194,163,.10); border:1px solid rgba(133,194,163,.22);
+    padding:9px 11px; border-radius:12px; margin-top:12px;
+    opacity:0; max-height:0; overflow:hidden; transition:opacity .45s ease .25s, max-height .45s ease, margin-top .45s ease; }
+  .revealed .ping-out{ opacity:1; max-height:90px; }
+  .ping-out b{ color:var(--text); font-weight:600; }
+  .ping-out .po-dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:4px; }
+
+  .room-card{ margin-top:12px; padding:13px; border-radius:16px;
+    background:rgba(38,54,46,.55); border:1px solid rgba(133,194,163,.22); }
+  .rc-top{ display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .rc-live{ width:8px; height:8px; border-radius:50%; background:var(--accent); position:relative; flex-shrink:0; }
+  .rc-live::after{ content:''; position:absolute; inset:-4px; top:-4px; right:-4px; bottom:-4px; left:-4px;
+    border-radius:50%; border:1.5px solid var(--accent); animation:pulseRing 2s ease-out infinite; }
+  .rc-t{ font-size:13px; font-weight:600; color:var(--text); }
+  .rc-s{ font-size:11.5px; color:var(--subtext); line-height:1.45; }
+
   @media (max-width:480px){
     body{ padding:0; align-items:stretch; }
     .rig{ width:100%; height:100%; gap:0; }
@@ -592,11 +794,19 @@
     <button class="theory-toggle" id="theoryToggle" aria-pressed="false"><span class="ttoggle-dot"></span>Theory tags</button>
     <div class="home-indicator"></div>
 
+    <div class="amb" id="amb">
+      <span class="amb-blob a1"></span>
+      <span class="amb-blob a2"></span>
+      <span class="amb-blob a3"></span>
+      <span class="amb-blob a4"></span>
+      <span class="amb-sweep"></span>
+      <span class="amb-grain"></span>
+    </div>
+
     <div class="screens">
 
       <!-- SCREEN 0: INTRO / BEFORE-AFTER -->
       <section class="screen active" id="screen-intro" data-stage="0">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">11:47 PM · Chapter 4, half-done · phone buzzes</div>
           <h1 class="headline">One habit, two paths</h1>
@@ -632,7 +842,6 @@
 
       <!-- SCREEN 1: HOW TETHER KNOWS YOUR ROUTINE + SCENARIO PICKER -->
       <section class="screen scroll" id="screen-context" data-stage="1">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
         <div class="dot-pattern"></div>
         <div class="screen-pad">
           <div class="eyebrow">Before it ever interrupts</div>
@@ -679,7 +888,7 @@
 
           <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="class">
             <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 4l9 3.5-9 3.5-9-3.5Z"/><path d="M7 10v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V10"/><path d="M21 7.5V13"/></svg></span>
-            <span>
+            <span class="scen-txt">
               <span class="scen-t">In a scheduled class</span>
               <span class="scen-s">Tue 10:15 · Consumer Behaviour · from the timetable</span>
             </span>
@@ -688,7 +897,7 @@
 
           <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="self">
             <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.5v5l3.2 1.9"/><circle cx="12" cy="12" r="8.5"/></svg></span>
-            <span>
+            <span class="scen-txt">
               <span class="scen-t">Outside class hours</span>
               <span class="scen-s">Sun 16:00 · a study block you set yourself</span>
             </span>
@@ -795,7 +1004,6 @@
 
       <!-- SCREEN 2: CHECK-IN -->
       <section class="screen" id="screen-checkin" data-stage="3">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#8FE0C0"></span><span class="blob b3" style="--blob:#6FA8DC"></span></div>
         <div class="screen-pad">
           <div class="eyebrow" id="ckEyebrow">Quick check-in · Consumer Behaviour</div>
           <div class="theory-row">
@@ -839,29 +1047,63 @@
 
       <!-- SCREEN 3a: CONNECTION -->
       <section class="screen" id="screen-branch-connection" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5B93D6"></span><span class="blob b2" style="--blob:#7FA8E8"></span><span class="blob b3" style="--blob:#9FC0F2"></span></div>
         <div class="screen-pad">
-          <div class="eyebrow">Feeling disconnected</div>
-          <button class="theory-tag" data-theory="belonging"><span class="tdot"></span>Need for Belonging (FOMO)<span class="texpand">+</span></button>
-          <h1 class="headline">Your circle</h1>
-          <p class="sub">A quick presence ping — no chat required.</p>
-          <div class="branch-card glass-surface">
-            <div class="branch-label">Currently</div>
-            <div class="buddy-list">
-              <div class="buddy"><div class="initial">P<span class="dotstat"></span></div><div class="info"><div class="name">Priya</div><div class="status">studying 📖</div></div><div class="reaction">👋</div></div>
-              <div class="buddy"><div class="initial">A<span class="dotstat away"></span></div><div class="info"><div class="name">Arjun</div><div class="status">on a break</div></div><div class="reaction">☕</div></div>
-              <div class="buddy"><div class="initial">S<span class="dotstat"></span></div><div class="info"><div class="name">Simran</div><div class="status">studying 📖</div></div><div class="reaction">✨</div></div>
+          <div class="eyebrow" id="connEyebrow">Feeling disconnected</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="belonging"><span class="tdot"></span>Need for Belonging (FOMO)<span class="texpand">+</span></button>
+            <button class="theory-tag ctx-self" data-theory="coregulation"><span class="tdot"></span>Social Co-Regulation<span class="texpand">+</span></button>
+          </div>
+
+          <!-- IN CLASS: the room is already shared, so the ping is silent + in-room -->
+          <div class="ctx-class">
+            <h1 class="headline">Same room, same slide</h1>
+            <p class="sub">Nine others are in this lecture with Tether on. A silent wave, nothing more.</p>
+            <div class="branch-card glass-surface">
+              <div class="branch-label">In this class right now</div>
+              <div class="buddy-list">
+                <div class="buddy"><div class="initial">P<span class="dotstat"></span></div><div class="info"><div class="name">Priya</div><div class="status">in class · row 3</div></div><div class="reaction">👋</div></div>
+                <div class="buddy"><div class="initial">A<span class="dotstat"></span></div><div class="info"><div class="name">Arjun</div><div class="status">in class</div></div><div class="reaction">✌️</div></div>
+                <div class="buddy"><div class="initial">+7</div><div class="info"><div class="name">7 others</div><div class="status">checked in this session</div></div><div class="reaction">✨</div></div>
+              </div>
+              <div class="ping-out ctx-class-out">
+                <span class="po-dot"></span>
+                <div>Wave sent silently — no notification, no buzz. <b>Priya waved back.</b></div>
+              </div>
             </div>
           </div>
+
+          <!-- OUTSIDE CLASS: nobody shares the room, so presence has to be built -->
+          <div class="ctx-self">
+            <h1 class="headline">Nobody's in the room</h1>
+            <p class="sub">Sunday afternoon — so instead of a wave, Tether opens a quiet shared block.</p>
+            <div class="branch-card glass-surface">
+              <div class="branch-label">Who's studying right now</div>
+              <div class="buddy-list">
+                <div class="buddy"><div class="initial">S<span class="dotstat"></span></div><div class="info"><div class="name">Simran</div><div class="status">in her own block · 40 min in</div></div><div class="reaction">📖</div></div>
+                <div class="buddy"><div class="initial">A<span class="dotstat away"></span></div><div class="info"><div class="name">Arjun</div><div class="status">free — would join if asked</div></div><div class="reaction">💬</div></div>
+              </div>
+              <div class="room-card">
+                <div class="rc-top">
+                  <span class="rc-live"></span>
+                  <div class="rc-t">Quiet room · 2 studying</div>
+                </div>
+                <div class="rc-s">No video, no chat. Just a timer you're both inside of, and a nudge if either of you drops out early.</div>
+                <div class="ping-out ctx-self-out">
+                  <span class="po-dot"></span>
+                  <div><b>Simran joined your room.</b> Both timers now run to 17:00.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="spacer"></div>
-          <button class="primary-btn" data-action="reveal">Send a quick ping</button>
+          <button class="primary-btn" data-action="reveal" id="connBtn">Send a silent wave</button>
           <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-connection">Continue</button>
         </div>
       </section>
 
       <!-- SCREEN 3b: OVER-COMMIT -->
       <section class="screen" id="screen-branch-overcommit" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#7FC7A8"></span><span class="blob b3" style="--blob:#9EE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Lost track of time</div>
           <button class="theory-tag" data-theory="planning"><span class="tdot"></span>Planning Fallacy<span class="texpand">+</span></button>
@@ -881,7 +1123,6 @@
 
       <!-- SCREEN 3c: PACING -->
       <section class="screen" id="screen-branch-pacing" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#4FBF7C"></span><span class="blob b2" style="--blob:#79D69E"></span><span class="blob b3" style="--blob:#A0EEBE"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">This is dragging</div>
           <button class="theory-tag" data-theory="effort"><span class="tdot"></span>Effort Perception &amp; Boredom<span class="texpand">+</span></button>
@@ -905,7 +1146,6 @@
 
       <!-- SCREEN 3d: RELEVANCE -->
       <section class="screen" id="screen-branch-relevance" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#7C82E0"></span><span class="blob b2" style="--blob:#9D8CE8"></span><span class="blob b3" style="--blob:#BCADF2"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Not sure this matters</div>
           <button class="theory-tag" data-theory="expectancy"><span class="tdot"></span>Expectancy-Value Theory<span class="texpand">+</span></button>
@@ -928,7 +1168,6 @@
 
       <!-- BRANCH 3e: COMMITMENT (self-study only) -->
       <section class="screen" id="screen-branch-commitment" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#C9A24B"></span><span class="blob b2" style="--blob:#DCC07A"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Nothing's holding me to this</div>
           <div class="theory-row">
@@ -952,7 +1191,6 @@
 
       <!-- BRANCH 3f: LATER (self-study only) -->
       <section class="screen" id="screen-branch-later" data-stage="4">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#7C82E0"></span><span class="blob b2" style="--blob:#9D8CE8"></span><span class="blob b3" style="--blob:#BCADF2"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">I'll just do it later</div>
           <div class="theory-row">
@@ -976,7 +1214,6 @@
 
       <!-- SCREEN 7: DASHBOARD -->
       <section class="screen" id="screen-dashboard" data-stage="5">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
         <div class="screen-pad">
           <div class="eyebrow">Your progress</div>
           <div class="theory-row">
@@ -1020,27 +1257,63 @@
       </section>
 
       <!-- SIDE SCREEN: INSTRUCTOR VIEW (anonymized, not part of student flow) -->
-      <section class="screen" id="screen-instructor" data-stage="-1">
-        <div class="liquid-bg"><span class="blob b1" style="--blob:#6B93B0"></span><span class="blob b2" style="--blob:#8FADC2"></span><span class="blob b3" style="--blob:#5A7E99"></span></div>
+      <section class="screen scroll" id="screen-instructor" data-stage="-1">
         <div class="screen-pad">
-          <div class="eyebrow">Instructor view</div>
+          <div class="eyebrow">Instructor view · CB · Section B</div>
           <button class="theory-tag" data-theory="instructional"><span class="tdot"></span>Behavioural Signal as Feedback<span class="texpand">+</span></button>
           <h1 class="headline">This week's check-ins</h1>
-          <p class="sub">Aggregated across the class · no individual data shown</p>
+          <p class="sub">Aggregated across 58 students · no individual data, ever.</p>
+
+          <div class="ins-stats">
+            <div class="ins-stat"><div class="isv">142</div><div class="isl">check-ins</div></div>
+            <div class="ins-stat"><div class="isv">58</div><div class="isl">students</div></div>
+            <div class="ins-stat"><div class="isv">61%</div><div class="isl">redirected</div></div>
+          </div>
+
           <div class="branch-card glass-surface" style="margin-bottom:14px;">
+            <div class="branch-label">What students reported</div>
             <div class="bars">
-              <div class="bar-row"><div class="tag-name">Disconnected</div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><div style="font-size:11px;color:var(--subtext);width:30px;text-align:right;">18%</div></div>
-              <div class="bar-row"><div class="tag-name">Time lost</div><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><div style="font-size:11px;color:var(--subtext);width:30px;text-align:right;">24%</div></div>
-              <div class="bar-row"><div class="tag-name">Dragging</div><div class="bar-track"><div class="bar-fill" style="width:41%"></div></div><div style="font-size:11px;color:var(--subtext);width:30px;text-align:right;">41%</div></div>
-              <div class="bar-row"><div class="tag-name">Not relevant</div><div class="bar-track"><div class="bar-fill" style="width:17%"></div></div><div style="font-size:11px;color:var(--subtext);width:30px;text-align:right;">17%</div></div>
+              <div class="bar-row"><div class="tag-name">Dragging</div><div class="bar-track"><div class="bar-fill" style="width:41%"></div></div><div class="bar-pct">41%</div></div>
+              <div class="bar-row"><div class="tag-name">Time lost</div><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><div class="bar-pct">24%</div></div>
+              <div class="bar-row"><div class="tag-name">Disconnected</div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><div class="bar-pct">18%</div></div>
+              <div class="bar-row"><div class="tag-name">Not relevant</div><div class="bar-track"><div class="bar-fill" style="width:17%"></div></div><div class="bar-pct">17%</div></div>
             </div>
           </div>
+
+          <div class="branch-card glass-surface" style="margin-bottom:14px;">
+            <div class="branch-label">"Dragging" by session · last 6 weeks</div>
+            <div class="trend">
+              <svg viewBox="0 0 260 92" preserveAspectRatio="none" class="trend-svg">
+                <line x1="0" y1="23" x2="260" y2="23" class="tgrid"/>
+                <line x1="0" y1="46" x2="260" y2="46" class="tgrid"/>
+                <line x1="0" y1="69" x2="260" y2="69" class="tgrid"/>
+                <polygon class="tarea" points="8,64 58,58 108,49 158,40 208,26 252,14 252,92 8,92"/>
+                <polyline class="tline" points="8,64 58,58 108,49 158,40 208,26 252,14"/>
+                <circle class="tdotpt" cx="8"   cy="64" r="3"/>
+                <circle class="tdotpt" cx="58"  cy="58" r="3"/>
+                <circle class="tdotpt" cx="108" cy="49" r="3"/>
+                <circle class="tdotpt" cx="158" cy="40" r="3"/>
+                <circle class="tdotpt" cx="208" cy="26" r="3"/>
+                <circle class="tdotpt last" cx="252" cy="14" r="4"/>
+              </svg>
+              <div class="trend-x"><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span></div>
+            </div>
+            <div class="trend-note"><span class="up">▲ 18 pts</span> since Week 1 — the rise starts with Chapter 4.</div>
+          </div>
+
           <div class="branch-card glass-surface">
             <div class="branch-label">Insight</div>
-            <p style="font-size:13px;color:var(--text);line-height:1.55;">"Dragging" is the top trigger this week — worth a pacing check on Chapter 4.</p>
+            <p style="font-size:13px;color:var(--text);line-height:1.55;">"Dragging" is now the dominant trigger and it is climbing, not flat. That points at pacing in the material rather than motivation in the cohort — worth a look at Chapter 4's length before the next session.</p>
           </div>
+
+          <div class="note-card" style="margin-bottom:4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+            <div>Counts only. <b>No names, no timestamps, no per-student history</b> — anonymity is what keeps the answers honest.</div>
+          </div>
+
           <div class="spacer"></div>
-          <button class="ghost-btn" data-goto="dashboard" data-stage="5">← Back</button>
+          <button class="primary-btn" data-goto="homescreen" data-stage="6">Close Tether</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5">← Back to student view</button>
         </div>
       </section>
 
@@ -1077,6 +1350,15 @@
 
     </div>
 
+    <div class="pax-veil" id="paxVeil">
+      <span class="pax-glow"></span>
+      <div class="pax-inner">
+        <div class="pax-mark"></div>
+        <div class="pax-lat">Pax in corde.</div>
+        <div class="pax-en">Peace in the heart.</div>
+      </div>
+    </div>
+
     <div class="theory-modal" id="theoryModal">
       <div class="tm-card">
         <div class="tm-grip"></div>
@@ -1105,8 +1387,33 @@
   var theoryToggle = document.getElementById('theoryToggle');
   var phoneEl = document.querySelector('.phone');
   var homeMockup = document.getElementById('homeMockup');
-  var interceptTimer = null, colorTimer = null;
+  var paxVeil = document.getElementById('paxVeil');
+  var interceptTimer = null, colorTimer = null, paxTimer = null, paxTimer2 = null;
   var lastStage = 1;
+
+  /* ---------------- live ambient palette, per screen ---------------- */
+  var AMB = {
+    'intro':              ['#5FA890','#6FA8DC','#8FE0C0','#4E9AA8'],
+    'context':            ['#5FA890','#6FA8DC','#8FE0C0','#5B93D6'],
+    'feed':               ['#FF3E7F','#8B5CF6','#FFC24B','#5B3EFF'],
+    'checkin':            ['#5FA890','#8FE0C0','#6FA8DC','#4E9AA8'],
+    'branch-connection':  ['#5B93D6','#7FA8E8','#9FC0F2','#6FA8DC'],
+    'branch-overcommit':  ['#5FA890','#7FC7A8','#9EE0C0','#4E9AA8'],
+    'branch-pacing':      ['#4FBF7C','#79D69E','#A0EEBE','#5FA890'],
+    'branch-relevance':   ['#7C82E0','#9D8CE8','#BCADF2','#6FA8DC'],
+    'branch-commitment':  ['#C9A24B','#DCC07A','#8FE0C0','#B08A3C'],
+    'branch-later':       ['#7C82E0','#9D8CE8','#BCADF2','#5B93D6'],
+    'dashboard':          ['#5FA890','#6FA8DC','#8FE0C0','#4E9AA8'],
+    'instructor':         ['#6B93B0','#8FADC2','#5A7E99','#4E9AA8'],
+    'homescreen':         ['#3B4C66','#5A4A78','#2E4A50','#3A3560']
+  };
+  function setAmbience(id){
+    var p = AMB[id] || AMB['intro'];
+    phoneEl.style.setProperty('--b1', p[0]);
+    phoneEl.style.setProperty('--b2', p[1]);
+    phoneEl.style.setProperty('--b3', p[2]);
+    phoneEl.style.setProperty('--b4', p[3]);
+  }
 
   /* ---------------- theory library ---------------- */
   var THEORY = {
@@ -1238,6 +1545,14 @@
       why: 'Information about yourself supports intrinsic motivation; trophies substitute for it. The aim is a student who eventually does not need the app.',
       ev: 'Stated as a design risk in the report rather than hidden — the one metric that tests it is redirect success on sessions where the streak has already broken.'
     },
+    coregulation: {
+      family: 'Social Motivation',
+      name: 'Social Co-Regulation',
+      what: 'Self-regulation is easier when it is shared. Working alongside someone — even silently, even remotely — raises sustained attention, which is why libraries and co-working spaces function at all.',
+      how: 'In a lecture the room is already shared, so a silent wave is enough. On a Sunday nobody shares your room, so Tether opens a quiet block instead: two timers, no chat, and a nudge if either person drops out early.',
+      why: 'The belonging need outside class hours is structurally different — there is no ambient presence to tap into, so the app has to create a small one rather than point at an existing one.',
+      ev: 'Survey: 26% named "knowing a friend is also studying right now" as something that has genuinely pulled them back — equal to a friend actively messaging them, and far less disruptive.'
+    },
     instructional: {
       family: 'Systems / Feedback Loops',
       name: 'Behavioural Signal as Instructional Feedback',
@@ -1276,12 +1591,16 @@
     class: {
       ctx: 'Consumer Behaviour · 10:15–11:45 · from your timetable',
       sub: 'You opened this while your Consumer Behaviour class was still running.',
-      eyebrow: 'Quick check-in · Consumer Behaviour'
+      eyebrow: 'Quick check-in · Consumer Behaviour',
+      connEyebrow: 'Feeling disconnected · in class',
+      connBtn: 'Send a silent wave'
     },
     self: {
       ctx: 'Self-study block · 16:00–17:30 · a block you set yourself',
       sub: 'You opened this during a study block you scheduled for yourself on Thursday.',
-      eyebrow: 'Quick check-in · your own study block'
+      eyebrow: 'Quick check-in · your own study block',
+      connEyebrow: 'Feeling disconnected · studying alone',
+      connBtn: 'Open a quiet room'
     }
   };
   function setScenario(key){
@@ -1290,9 +1609,13 @@
     var ctx = document.getElementById('icCtx');
     var sub = document.getElementById('icSub');
     var eb  = document.getElementById('ckEyebrow');
+    var ce  = document.getElementById('connEyebrow');
+    var cb  = document.getElementById('connBtn');
     if(ctx) ctx.lastChild.textContent = s.ctx;
     if(sub) sub.textContent = s.sub;
     if(eb) eb.textContent = s.eyebrow;
+    if(ce) ce.textContent = s.connEyebrow;
+    if(cb) cb.textContent = s.connBtn;
   }
 
   /* ---------------- navigation ---------------- */
@@ -1317,10 +1640,18 @@
     if(id === 'feed'){
       interceptTimer = setTimeout(function(){ interceptOverlay.classList.add('show'); }, 1100);
     }
-    clearTimeout(colorTimer);
+    setAmbience(id);
+
+    clearTimeout(colorTimer); clearTimeout(paxTimer); clearTimeout(paxTimer2);
     if(homeMockup){ homeMockup.classList.remove('color'); }
     if(id === 'homescreen'){
-      colorTimer = setTimeout(function(){ homeMockup.classList.add('color'); }, 4200);
+      /* closing beat: the veil is already up, the quote breathes, then it lifts
+         to reveal the grayscale home screen underneath */
+      paxVeil.classList.add('show');
+      paxTimer = setTimeout(function(){ paxVeil.classList.remove('show'); }, 3400);
+      colorTimer = setTimeout(function(){ homeMockup.classList.add('color'); }, 8200);
+    } else {
+      paxVeil.classList.remove('show');
     }
   }
 
@@ -1375,6 +1706,8 @@
     document.querySelectorAll('.ghost-btn[data-goto]').forEach(function(b){ b.style.display = 'none'; });
     todayNote.textContent = "Today's check-in: —";
     lastStage = 1;
+    clearTimeout(paxTimer); clearTimeout(paxTimer2);
+    paxVeil.classList.remove('show');
     goto('intro', 0);
   }
   restartBtn.addEventListener('click', resetAll);
