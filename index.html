@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tether — Interactive Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#080C0A;
+    --surface:#16211C;
+    --surface-2:#1D2A24;
+    --surface-3:#26362E;
+    --text:#EAF0EA;
+    --subtext:#93A79C;
+    --faint:#5B6E64;
+    --accent:#85C2A3;
+    --accent-ink:#0A1F17;
+    --accent-dim:rgba(133,194,163,.18);
+    --line:rgba(255,255,255,.08);
+    --feed-a:#FF3E7F;
+    --feed-b:#8B5CF6;
+    --feed-c:#FFC24B;
+    --radius-lg:30px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --shadow-deep:0 30px 80px rgba(0,0,0,.55);
+    --font-display:'Bricolage Grotesque', 'Inter', sans-serif;
+    --font-body:'Inter', -apple-system, sans-serif;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 20% 15%, rgba(133,194,163,.09), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(255,62,127,.05), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px 20px;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  button{font-family:inherit; cursor:pointer; background:none; border:none; color:inherit;}
+  button:focus-visible, .tap-card:focus-visible, .dot:focus-visible, .post:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:3px;
+    border-radius:8px;
+  }
+
+  .rig{ display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .brand-row{ display:flex; align-items:center; gap:10px; color:#7E9488; font-size:13px; }
+  .brand-row .mark{ width:8px; height:8px; border-radius:50%; background:#85C2A3; }
+
+  .grain{ position:relative; overflow:hidden; }
+  .grain::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.5) 1px, transparent 1px);
+    background-size:3px 3px;
+    opacity:.06;
+    mix-blend-mode:overlay;
+    pointer-events:none;
+  }
+
+  /* ---------- liquid glass ambience ---------- */
+  .liquid-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .liquid-bg .blob{
+    position:absolute; border-radius:50%;
+    filter:blur(52px);
+    background:radial-gradient(circle, var(--blob), transparent 72%);
+    mix-blend-mode:screen;
+    animation:liquidFlow 20s ease-in-out infinite;
+  }
+  .liquid-bg .blob.b1{ width:280px; height:280px; top:-70px; left:-70px; opacity:.5; }
+  .liquid-bg .blob.b2{ width:220px; height:220px; bottom:-60px; right:-50px; opacity:.42; animation-duration:26s; animation-delay:-9s; animation-direction:reverse; }
+  .liquid-bg .blob.b3{ width:190px; height:190px; top:36%; right:-45px; opacity:.34; animation-duration:23s; animation-delay:-4s; }
+  @keyframes liquidFlow{
+    0%{ transform:translate(0,0) scale(1) rotate(0deg); }
+    25%{ transform:translate(26px,20px) scale(1.14) rotate(6deg); }
+    50%{ transform:translate(8px,42px) scale(.92) rotate(-4deg); }
+    75%{ transform:translate(-20px,12px) scale(1.1) rotate(3deg); }
+    100%{ transform:translate(0,0) scale(1) rotate(0deg); }
+  }
+  .screen-pad{ position:relative; z-index:1; }
+
+  .glass-surface, .branch-card, .dash-card, .tap-card{
+    background:rgba(38,54,46,.5);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 0 0 1px rgba(255,255,255,.04), 0 12px 32px rgba(0,0,0,.35);
+  }
+
+  /* ---------- phone shell ---------- */
+  .phone{
+    position:relative;
+    width:390px;
+    height:820px;
+    background:var(--surface);
+    border-radius:52px;
+    box-shadow:var(--shadow-deep), 0 0 0 10px #05070a, 0 0 0 11px rgba(255,255,255,.06);
+    overflow:hidden;
+  }
+
+  /* shared chrome: status bar, island, home indicator — adapt to feed (dark) vs app (light) */
+  .statusbar{
+    position:absolute; top:0; left:0; right:0; height:52px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px 0 32px;
+    z-index:60; pointer-events:none;
+    color:var(--text);
+  }
+  .statusbar .time{ font-size:15px; font-weight:600; letter-spacing:-.01em; padding-top:2px; }
+  .statusbar .icons{ display:flex; align-items:center; gap:6px; padding-top:2px; }
+  .statusbar svg{ height:12px; }
+
+  .island{ position:absolute; top:15px; left:50%; transform:translateX(-50%); width:100px; height:30px; background:#000; border-radius:20px; z-index:61; }
+
+  .home-indicator{
+    position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+    width:134px; height:5px; border-radius:4px;
+    background:rgba(255,255,255,.5);
+    z-index:60;
+  }
+
+  .steps{ position:absolute; top:60px; left:0; right:0; display:flex; justify-content:center; gap:7px; z-index:55; }
+  .dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.18); transition:background .3s ease, transform .3s ease; }
+  .dot.active{ background:var(--accent); transform:scale(1.35); }
+
+  .restart{
+    position:absolute; top:56px; right:22px; z-index:55;
+    font-size:12px; color:var(--subtext);
+    padding:6px 10px; border-radius:20px;
+    background:rgba(255,255,255,.06);
+    display:none;
+  }
+  .restart.show{ display:block; }
+  .restart:hover{ color:var(--text); background:rgba(255,255,255,.1); }
+
+  .theory-toggle{
+    position:absolute; top:56px; left:22px; z-index:55;
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; color:var(--subtext);
+    background:rgba(255,255,255,.06);
+    padding:6px 10px; border-radius:20px;
+  }
+  .theory-toggle:hover{ background:rgba(255,255,255,.1); }
+  .theory-toggle .ttoggle-dot{ width:7px; height:7px; border-radius:50%; background:var(--faint); transition:background .2s ease, box-shadow .2s ease; }
+  .theory-toggle.on{ color:var(--text); }
+  .theory-toggle.on .ttoggle-dot{ background:#B79CFF; box-shadow:0 0 6px rgba(183,156,255,.7); }
+
+  .theory-tag{
+    display:none; align-items:center; gap:6px;
+    font-size:11px; color:#C9B6FF;
+    background:rgba(139,92,246,.16);
+    padding:4px 10px; border-radius:100px;
+    margin-bottom:10px; width:fit-content;
+  }
+  .theory-tag .tdot{ width:6px; height:6px; border-radius:50%; background:#B79CFF; flex-shrink:0; }
+  .phone.theory-on .theory-tag{ display:inline-flex; }
+
+  /* ---------- screens ---------- */
+  .screens{ position:relative; width:100%; height:100%; z-index:1; }
+  .screen{
+    position:absolute; inset:0;
+    padding:98px 0 0;
+    opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .5s ease, transform .5s ease, visibility 0s linear .5s;
+    display:flex; flex-direction:column;
+  }
+  .screen.active{ opacity:1; visibility:visible; transform:translateY(0); transition:opacity .5s ease, transform .5s ease; }
+  .screen-pad{ padding:0 22px 24px; display:flex; flex-direction:column; flex:1; min-height:0; }
+
+  .eyebrow{ font-size:12.5px; color:var(--faint); margin-bottom:6px; }
+  h1.headline{ font-family:var(--font-display); font-weight:650; font-size:25px; line-height:1.18; letter-spacing:-.01em; margin-bottom:8px; color:var(--text); }
+  p.sub{ font-size:14px; color:var(--subtext); line-height:1.5; margin-bottom:18px; }
+  .spacer{ flex:1; }
+
+  .primary-btn{
+    width:100%; padding:16px 20px; background:var(--accent); color:var(--accent-ink);
+    border-radius:100px; font-weight:650; font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .18s ease, box-shadow .18s ease;
+    box-shadow:0 10px 26px rgba(111,168,147,.3);
+  }
+  .primary-btn:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(111,168,147,.4); }
+  .primary-btn:active{ transform:translateY(0px) scale(.98); }
+  .ghost-btn{ width:100%; padding:14px 20px; margin-top:10px; border-radius:100px; font-weight:550; font-size:14px; color:var(--subtext); text-align:center; background:transparent; }
+  .ghost-btn:hover{ color:var(--text); }
+
+  /* ===================== SCREEN 1 — FEED (own dark, loud palette) ===================== */
+  #screen-feed{
+    padding-top:52px;
+    --surface:#111C20; --surface-2:#182228; --surface-3:#212B32;
+  }
+  .app-topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px 10px; }
+  .app-wordmark{ font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:-.01em; display:flex; align-items:center; gap:6px; color:var(--text); }
+  .app-wordmark .dot{ width:6px; height:6px; border-radius:50%; background:var(--feed-c); }
+  .app-topbar .icon-btn{ padding:4px; color:var(--text); }
+  .app-topbar .icon-btn svg{ width:22px; height:22px; }
+  .topbar-icons{ display:flex; gap:16px; }
+
+  .stories-row{ display:flex; gap:14px; padding:6px 18px 16px; overflow-x:auto; scrollbar-width:none; }
+  .stories-row::-webkit-scrollbar{ display:none; }
+  .story{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; }
+  .story .ring{ width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--feed-a),var(--feed-b),var(--feed-c)); display:flex; align-items:center; justify-content:center; position:relative; }
+  .story .ring.seen{ background:var(--surface-3); }
+  .story .ring .core{ width:50px; height:50px; border-radius:50%; background:var(--surface-2); border:2px solid var(--surface); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--text); }
+  .story .ring.you .core{ background:linear-gradient(135deg,#3D4452,#242A33); }
+  .story .plus{ position:absolute; bottom:-1px; right:-1px; width:17px; height:17px; border-radius:50%; background:var(--feed-c); color:#20180A; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; border:2px solid var(--surface); }
+  .story span{ font-size:10.5px; color:var(--subtext); }
+
+  .feed-scroll{ padding:0 18px 90px; flex:1; overflow-y:auto; overflow-x:hidden; }
+  .post{ background:var(--surface-2); border-radius:20px; margin-bottom:16px; overflow:hidden; animation:riseIn .6s ease both; border:1px solid var(--line); }
+  .post:nth-child(2){ animation-delay:.08s; } .post:nth-child(3){ animation-delay:.16s; }
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+
+  .post-user-row{ display:flex; align-items:center; gap:10px; padding:12px 14px; }
+  .post-user-row .avatar{ width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--feed-b),var(--feed-c)); flex-shrink:0; }
+  .post-user-row .meta{ flex:1; }
+  .post-user-row .post-name{ font-size:12.5px; font-weight:650; color:var(--text); }
+  .post-user-row .post-time{ font-size:11px; color:var(--faint); }
+  .post-user-row .more{ color:var(--faint); }
+  .post-user-row .more svg{ width:16px; height:16px; }
+
+  .post-media{ height:220px; position:relative; }
+  .post-media.m1{ background:radial-gradient(circle at 30% 20%, #FF7A9C, transparent 55%), radial-gradient(circle at 75% 70%, #8B5CF6, transparent 50%), linear-gradient(160deg,#5B3EFF,#FF3E7F 80%); }
+  .post-media.m2{ background:radial-gradient(circle at 70% 25%, #FFD37A, transparent 50%), radial-gradient(circle at 20% 80%, #FF6F61, transparent 55%), linear-gradient(160deg,#2C2440,#7A3E9E 85%); }
+  .post-media.m3{ background:radial-gradient(circle at 25% 30%, #7BF0C2, transparent 50%), radial-gradient(circle at 80% 75%, #3E8BFF, transparent 55%), linear-gradient(160deg,#1A2B4A,#3E5C9E 85%); }
+  .heart-burst{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; }
+  .heart-burst svg{ width:64px; height:64px; color:#fff; filter:drop-shadow(0 6px 18px rgba(0,0,0,.35)); transform:scale(.6); }
+  .heart-burst.burst{ animation:burstPop .7s ease; }
+  @keyframes burstPop{ 0%{ opacity:0; } 15%{ opacity:1; } 100%{ opacity:0; } }
+  .heart-burst.burst svg{ animation:burstScale .7s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes burstScale{ 0%{ transform:scale(.4);} 40%{ transform:scale(1.15);} 100%{ transform:scale(1);} }
+
+  .post-actions{ display:flex; align-items:center; gap:14px; padding:12px 14px 4px; color:var(--text); }
+  .post-actions svg{ width:21px; height:21px; }
+  .post-actions .push{ margin-left:auto; }
+  .post-likes{ font-size:12.5px; font-weight:650; padding:6px 14px 2px; color:var(--text); }
+  .post-caption{ font-size:12.5px; color:var(--subtext); padding:2px 14px 14px; line-height:1.45; }
+  .post-caption b{ color:var(--text); font-weight:650; }
+
+  .bottom-nav{
+    position:absolute; left:0; right:0; bottom:0; height:78px;
+    display:flex; align-items:flex-start; justify-content:space-around; padding-top:14px;
+    background:linear-gradient(180deg, rgba(17,28,32,0), rgba(17,28,32,.97) 30%);
+    z-index:20;
+  }
+  .bottom-nav .nav-item{ color:var(--faint); }
+  .bottom-nav .nav-item.active{ color:var(--text); }
+  .bottom-nav svg{ width:24px; height:24px; }
+  .bottom-nav .nav-item.profile{ width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,var(--feed-c),#FF9E6D); border:1.5px solid var(--text); }
+
+  .intercept-overlay{
+    position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(6,7,9,0); backdrop-filter:blur(0px);
+    pointer-events:none; transition:background .55s ease, backdrop-filter .55s ease; z-index:30;
+  }
+  .intercept-overlay.show{ background:rgba(6,7,9,.4); backdrop-filter:blur(8px); pointer-events:auto; }
+  .intercept-card{
+    position:relative; overflow:hidden;
+    width:calc(100% - 44px); margin-bottom:98px; padding:24px 22px 22px;
+    background:rgba(22,33,28,.62);
+    backdrop-filter:blur(26px) saturate(180%);
+    -webkit-backdrop-filter:blur(26px) saturate(180%);
+    border:1px solid rgba(133,194,163,.28); border-radius:26px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 -20px 50px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.3);
+    transform:translateY(120%); transition:transform .55s cubic-bezier(.2,.9,.25,1);
+  }
+  .intercept-card > *{ position:relative; z-index:1; }
+  .intercept-overlay.show .intercept-card{ transform:translateY(0); }
+  .intercept-card .tag{ display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--accent); background:var(--accent-dim); padding:5px 10px; border-radius:100px; margin-bottom:10px; }
+  .intercept-card .tag .mark{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .intercept-card h2{ font-family:var(--font-display); font-size:20px; font-weight:650; margin-bottom:6px; line-height:1.25; color:var(--text); }
+  .intercept-card p{ font-size:13.5px; color:var(--subtext); margin-bottom:18px; }
+
+  /* ===================== SCREEN 0 — INTRO / BEFORE-AFTER ===================== */
+  .compare-wrap{ display:flex; gap:12px; margin:16px 0 22px; }
+  .compare-panel{ flex:1; border-radius:20px; padding:16px 10px 14px; display:flex; flex-direction:column; align-items:center; background:rgba(38,54,46,.45); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.08); }
+  .compare-panel .flow-node{ width:34px; height:34px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--faint); flex-shrink:0; }
+  .compare-panel.path .flow-node{ background:var(--accent-dim); color:var(--accent); }
+  .compare-panel .flow-node svg{ width:16px; height:16px; }
+  .compare-panel .flow-arrow{ color:var(--faint); margin:3px 0; display:flex; }
+  .compare-panel .flow-arrow svg{ width:13px; height:13px; }
+  .compare-panel .loopback{ margin-top:6px; color:var(--faint); }
+  .compare-panel .loopback svg{ width:18px; height:18px; }
+  .compare-panel .panel-title{ font-size:12px; font-weight:650; margin-top:10px; text-align:center; color:var(--text); }
+  .compare-panel .panel-caption{ font-size:10.5px; color:var(--subtext); margin-top:2px; text-align:center; }
+
+  /* ===================== SCREEN 2 — CHECK-IN ===================== */
+  .trigger-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:6px; }
+  .tap-card{
+    border-radius:22px; padding:20px 16px; text-align:left;
+    transition:transform .18s ease, background .18s ease, border-color .18s ease;
+    display:flex; flex-direction:column; gap:14px; min-height:126px;
+  }
+  .tap-card:hover{ transform:translateY(-2px); background:rgba(48,68,58,.65); border-color:rgba(133,194,163,.45); }
+  .tap-card:active{ transform:translateY(0) scale(.98); }
+  .tap-card svg{ width:22px; height:22px; color:var(--accent); }
+  .tap-card span{ font-size:13.5px; font-weight:560; line-height:1.3; color:var(--text); }
+
+  /* ===================== BRANCH SCREENS ===================== */
+  .branch-card{ border-radius:24px; padding:22px; margin-bottom:16px; }
+  .branch-label{ font-size:12px; color:var(--faint); margin-bottom:14px; }
+
+  .buddy-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+  .buddy{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(38,54,46,.5); border-radius:16px; position:relative; }
+  .buddy .initial{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--accent-ink); background:var(--accent); flex-shrink:0; position:relative; }
+  .buddy .initial .dotstat{ position:absolute; bottom:-1px; right:-1px; width:9px; height:9px; border-radius:50%; background:#4ADE80; border:2px solid #1D2A24; }
+  .buddy .initial .dotstat.away{ background:#94A3B8; }
+  .buddy .info{ flex:1; } .buddy .name{ font-size:13px; font-weight:600; color:var(--text); } .buddy .status{ font-size:11.5px; color:var(--subtext); }
+  .buddy .reaction{ font-size:14px; opacity:0; transform:scale(.5); transition:opacity .4s ease, transform .4s cubic-bezier(.3,1.5,.4,1); }
+  .revealed .buddy .reaction{ opacity:1; transform:scale(1); }
+
+  .ring-wrap{ display:flex; align-items:center; gap:18px; margin-bottom:4px; }
+  .ring-wrap svg{ width:76px; height:76px; flex-shrink:0; }
+  .ring-track{ fill:none; stroke:var(--surface-3); stroke-width:6; }
+  .ring-fill{ fill:none; stroke:var(--accent); stroke-width:6; stroke-linecap:round; stroke-dasharray:200; stroke-dashoffset:200; transform:rotate(-90deg); transform-origin:50% 50%; transition:stroke-dashoffset 1.1s ease; }
+  .revealed .ring-fill{ stroke-dashoffset:36; }
+  .ring-copy .big{ font-family:var(--font-display); font-size:20px; font-weight:650; color:var(--text); } .ring-copy .small{ font-size:12px; color:var(--subtext); margin-top:2px; }
+
+  .content-block{ background:rgba(38,54,46,.5); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; margin-bottom:6px; }
+  .full-lines{ display:flex; flex-direction:column; gap:8px; transition:opacity .35s ease, max-height .45s ease; overflow:hidden; }
+  .full-lines .ln{ height:9px; border-radius:5px; background:rgba(255,255,255,.09); }
+  .full-lines .ln:nth-child(1){ width:96%; } .full-lines .ln:nth-child(2){ width:88%; } .full-lines .ln:nth-child(3){ width:92%; } .full-lines .ln:nth-child(4){ width:70%; }
+  .revealed .full-lines{ max-height:0; opacity:0; margin:0; }
+  .compressed{ max-height:0; opacity:0; overflow:hidden; transition:max-height .45s ease .1s, opacity .4s ease .15s; }
+  .revealed .compressed{ max-height:120px; opacity:1; }
+  .compressed .pt{ display:flex; gap:8px; font-size:12.5px; color:var(--text); margin-bottom:8px; align-items:flex-start; }
+  .compressed .pt::before{ content:'•'; color:var(--accent); }
+
+  .relevance-fact{ display:flex; gap:10px; align-items:flex-start; }
+  .relevance-fact svg{ width:18px; height:18px; color:var(--accent); flex-shrink:0; margin-top:2px; }
+  .relevance-fact p{ font-size:13.5px; color:var(--text); line-height:1.5; }
+  .relevance-meter{ margin-top:16px; height:6px; border-radius:4px; background:var(--surface-3); overflow:hidden; }
+  .relevance-meter .fill{ height:100%; width:0%; border-radius:4px; background:var(--accent); transition:width .8s ease; }
+  .revealed .relevance-meter .fill{ width:82%; }
+  .relevance-tagline{ font-size:12px; color:var(--subtext); margin-top:8px; opacity:0; transition:opacity .4s ease .3s; }
+  .revealed .relevance-tagline{ opacity:1; }
+
+  /* ===================== SCREEN 7 — DASHBOARD ===================== */
+  .dash-row{ display:flex; gap:12px; margin-bottom:12px; }
+  .dash-card{ flex:1; border-radius:20px; padding:16px; }
+  .dash-card .label{ font-size:11.5px; color:var(--faint); margin-bottom:8px; }
+  .dash-card .value{ font-family:var(--font-display); font-size:22px; font-weight:650; color:var(--text); }
+  .dash-card .value .unit{ font-size:12px; color:var(--subtext); font-family:var(--font-body); font-weight:500; }
+  .spark{ width:100%; height:34px; margin-top:8px; }
+  .today-note{ font-size:12px; background:var(--accent-dim); color:var(--accent); display:inline-flex; padding:5px 10px; border-radius:100px; margin-top:2px; }
+  .bars{ display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+  .bar-row{ display:flex; align-items:center; gap:8px; }
+  .bar-row .tag-name{ font-size:11.5px; color:var(--subtext); width:64px; flex-shrink:0; }
+  .bar-track{ flex:1; height:6px; border-radius:4px; background:var(--surface-3); overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:4px; background:var(--accent); }
+  .circle-row{ display:flex; margin-top:4px; }
+  .circle-row .initial{ margin-right:-8px; border:2px solid #1D2A24; }
+
+  /* ===================== SCREEN 5 — HOME SCREEN (grayscale cool-down) ===================== */
+  #screen-homescreen{ padding-top:0; }
+  .home-mockup{
+    position:relative; height:100%; padding:92px 20px 26px;
+    filter:grayscale(1);
+    transition:filter 1.8s ease;
+  }
+  .home-mockup.color{ filter:grayscale(0); }
+  .home-wallpaper{
+    position:absolute; inset:0; z-index:-1;
+    background:
+      radial-gradient(circle at 30% 18%, #6B8CFF, transparent 55%),
+      radial-gradient(circle at 78% 78%, #FF6BAA, transparent 50%),
+      linear-gradient(160deg,#1B2440,#3A2E5C 85%);
+  }
+  .dim-note{
+    display:flex; align-items:center; gap:6px;
+    width:-webkit-fit-content; width:fit-content; margin:0 auto 22px;
+    font-size:11.5px; color:#F3F0E9;
+    background:rgba(0,0,0,.35); backdrop-filter:blur(10px);
+    padding:7px 13px; border-radius:100px;
+    transition:opacity 1s ease;
+  }
+  .home-mockup.color .dim-note{ opacity:0; }
+  .dim-note .ddot{ width:6px; height:6px; border-radius:50%; background:#85C2A3; flex-shrink:0; }
+  .icon-grid{ display:flex; flex-wrap:wrap; justify-content:space-between; row-gap:18px; }
+  .app-icon{ width:58px; height:58px; border-radius:17px; background:var(--ic); position:relative; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+  .app-icon::after{ content:''; position:absolute; inset:26%; border-radius:6px; background:rgba(255,255,255,.5); }
+  .dock{
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(20px);
+    border-radius:26px; padding:12px 16px;
+  }
+  .dock .app-icon{ width:46px; height:46px; flex-shrink:0; }
+
+
+  /* ---------- dot pattern (Magic UI) ---------- */
+  .dot-pattern{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(133,194,163,.20) 1px, transparent 1px);
+    background-size:18px 18px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%, #000 25%, transparent 70%);
+    mask-image:radial-gradient(ellipse at 50% 0%, #000 25%, transparent 70%);
+  }
+
+  /* ---------- border beam (Magic UI) ---------- */
+  @property --beam-angle{ syntax:'<angle>'; initial-value:0deg; inherits:false; }
+  .beam::after{
+    content:''; position:absolute; inset:-1px; border-radius:inherit; padding:1px;
+    background:conic-gradient(from var(--beam-angle), transparent 0deg, rgba(133,194,163,.85) 45deg, transparent 100deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    animation:beamSpin 6s linear infinite; pointer-events:none; z-index:2;
+  }
+  @keyframes beamSpin{ to{ --beam-angle:360deg; } }
+
+  /* ---------- text generate (Aceternity) ---------- */
+  .tg > span{ display:inline-block; opacity:0; filter:blur(5px); }
+  .intercept-overlay.show .tg > span{ animation:tgIn .5s cubic-bezier(.22,1,.36,1) forwards; }
+  .tg > span:nth-child(1){ animation-delay:.10s } .tg > span:nth-child(2){ animation-delay:.17s }
+  .tg > span:nth-child(3){ animation-delay:.24s } .tg > span:nth-child(4){ animation-delay:.31s }
+  .tg > span:nth-child(5){ animation-delay:.38s } .tg > span:nth-child(6){ animation-delay:.45s }
+  .tg > span:nth-child(7){ animation-delay:.52s } .tg > span:nth-child(8){ animation-delay:.59s }
+  @keyframes tgIn{ to{ opacity:1; filter:blur(0); } }
+
+  /* ---------- scrollable screens ---------- */
+  .screen.scroll .screen-pad{ overflow-y:auto; scrollbar-width:none; }
+  .screen.scroll .screen-pad::-webkit-scrollbar{ display:none; }
+
+  /* ---------- theory tag -> expandable ---------- */
+  .theory-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .theory-row .theory-tag{ margin-bottom:0; }
+  .theory-tag .texpand{ font-size:12px; line-height:1; opacity:.7; margin-left:1px; font-weight:700; }
+  .theory-tag{ cursor:pointer; text-align:left; align-self:flex-start; border:1px solid rgba(183,156,255,.26); transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+  .theory-row{ align-self:flex-start; }
+  .theory-tag:hover{ background:rgba(139,92,246,.28); border-color:rgba(183,156,255,.55); transform:translateY(-1px); }
+
+  /* ---------- theory modal ---------- */
+  .theory-modal{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0; z-index:80;
+    display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(4,8,6,0); backdrop-filter:blur(0px);
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, background .35s ease, backdrop-filter .35s ease, visibility 0s linear .35s;
+  }
+  .theory-modal.show{
+    opacity:1; visibility:visible; background:rgba(4,8,6,.6); backdrop-filter:blur(10px);
+    transition:opacity .35s ease, background .35s ease, backdrop-filter .35s ease;
+  }
+  .tm-card{
+    width:100%; max-height:86%; overflow-y:auto; scrollbar-width:none;
+    background:rgba(29,42,36,.94);
+    backdrop-filter:blur(26px) saturate(180%);
+    border-top:1px solid rgba(183,156,255,.32);
+    border-radius:28px 28px 0 0; padding:18px 22px 26px;
+    transform:translateY(100%); transition:transform .42s cubic-bezier(.2,.9,.25,1);
+  }
+  .tm-card::-webkit-scrollbar{ display:none; }
+  .theory-modal.show .tm-card{ transform:translateY(0); }
+  .tm-grip{ width:38px; height:4px; border-radius:3px; background:rgba(255,255,255,.18); margin:0 auto 14px; }
+  .tm-family{ font-size:10.5px; color:#B79CFF; letter-spacing:.07em; text-transform:uppercase; margin-bottom:5px; }
+  .tm-name{ font-family:var(--font-display); font-size:20px; font-weight:650; line-height:1.22; margin-bottom:15px; color:var(--text); }
+  .tm-sec{ margin-bottom:13px; }
+  .tm-h{ font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  .tm-p{ font-size:13px; line-height:1.55; color:var(--text); }
+  .tm-ev{ font-size:12px; line-height:1.5; color:#D3C4FF; background:rgba(139,92,246,.12); border-left:2px solid #B79CFF; padding:9px 11px; border-radius:0 10px 10px 0; margin-bottom:14px; }
+  .tm-close{ width:100%; padding:13px; border-radius:100px; background:rgba(255,255,255,.07); color:var(--text); font-size:14px; font-weight:550; }
+  .tm-close:hover{ background:rgba(255,255,255,.12); }
+
+  /* ---------- context / routine screen ---------- */
+  .sync-row{ display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:14px; background:rgba(133,194,163,.10); border:1px solid rgba(133,194,163,.22); margin-bottom:9px; }
+  .sync-row > svg{ width:16px; height:16px; flex-shrink:0; }
+  .sync-row .st{ font-size:11.5px; color:var(--subtext); line-height:1.4; }
+  .sync-row .st b{ color:var(--accent); font-weight:600; }
+  .live-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); position:relative; flex-shrink:0; margin:0 4px; }
+  .live-dot::after{ content:''; position:absolute; inset:-4px; border-radius:50%; border:1.5px solid var(--accent); animation:pulseRing 2s ease-out infinite; }
+  @keyframes pulseRing{ 0%{ transform:scale(.55); opacity:.75; } 100%{ transform:scale(1.5); opacity:0; } }
+
+  .tl{ position:relative; padding-left:17px; margin:14px 0 4px; }
+  .tl::before{ content:''; position:absolute; left:3px; top:8px; bottom:8px; width:2px; border-radius:2px; background:linear-gradient(180deg, rgba(133,194,163,.75), rgba(133,194,163,.10)); }
+  .tl-item{ position:relative; padding:7px 0 7px 13px; }
+  .tl-item::before{ content:''; position:absolute; left:-17.5px; top:13px; width:9px; height:9px; border-radius:50%; background:var(--surface-3); border:2px solid rgba(133,194,163,.5); }
+  .tl-item.now::before{ background:var(--accent); border-color:var(--accent); box-shadow:0 0 0 4px rgba(133,194,163,.16); }
+  .tl-time{ font-size:10.5px; color:var(--faint); }
+  .tl-title{ font-size:13px; font-weight:600; color:var(--text); line-height:1.3; }
+  .tl-item.now .tl-title{ color:var(--accent); }
+  .tl-src{ display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--faint); margin-top:2px; }
+  .tl-src .sq{ width:6px; height:6px; border-radius:2px; flex-shrink:0; }
+
+  .scen-card{ width:100%; text-align:left; padding:18px 18px; border-radius:22px; margin-bottom:12px;
+    min-height:82px; display:flex; align-items:center; gap:14px;
+    background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09);
+    transition:transform .18s ease, border-color .18s ease, background .18s ease; }
+  .scen-card:hover{ transform:translateY(-2px); border-color:rgba(133,194,163,.5); background:rgba(48,68,58,.66); }
+  .scen-card:active{ transform:translateY(0) scale(.985); }
+  .scen-ic{ width:46px; height:46px; border-radius:15px; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .scen-ic svg{ width:22px; height:22px; color:var(--accent); }
+  .scen-txt{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .scen-t{ font-size:15px; font-weight:650; color:var(--text); line-height:1.25; }
+  .scen-s{ font-size:12px; color:var(--subtext); line-height:1.4; }
+  .scen-go{ margin-left:auto; color:var(--faint); font-size:19px; flex-shrink:0; }
+
+  /* ---------- intercept additions ---------- */
+  .ic-ctx{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--accent); background:var(--accent-dim); padding:4px 9px; border-radius:100px; margin-bottom:10px; }
+  .ic-ctx .sq{ width:6px; height:6px; border-radius:2px; background:var(--accent); flex-shrink:0; }
+  .ic-bar{ height:3px; border-radius:2px; background:rgba(255,255,255,.10); overflow:hidden; margin:2px 0 12px; }
+  .ic-bar i{ display:block; height:100%; width:0; background:var(--accent); border-radius:2px; }
+  .intercept-overlay.show .ic-bar i{ animation:icFill 10s linear forwards; }
+  @keyframes icFill{ to{ width:100%; } }
+  .ic-why{ display:flex; gap:8px; align-items:flex-start; font-size:11.5px; color:var(--subtext); line-height:1.45;
+    background:rgba(255,255,255,.05); padding:9px 11px; border-radius:12px; margin-bottom:14px; }
+  .ic-why svg{ width:13px; height:13px; color:var(--accent); flex-shrink:0; margin-top:1.5px; }
+  .ic-why b{ color:var(--text); font-weight:600; }
+
+  /* ---------- generic note card ---------- */
+  .note-card{ display:flex; gap:9px; align-items:flex-start; font-size:11.5px; color:var(--subtext); line-height:1.5;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); padding:11px 12px; border-radius:14px; margin-top:12px; }
+  .note-card svg{ width:14px; height:14px; color:var(--accent); flex-shrink:0; margin-top:1.5px; }
+  .note-card b{ color:var(--text); font-weight:600; }
+
+  /* ---------- chrome button cluster ---------- */
+  .chrome-right{ position:absolute; top:56px; right:22px; z-index:55; display:flex; gap:6px; }
+  .chip-btn{ font-size:11px; color:var(--subtext); padding:6px 10px; border-radius:20px; background:rgba(255,255,255,.06); white-space:nowrap; }
+  .chip-btn:hover{ color:var(--text); background:rgba(255,255,255,.11); }
+  .chip-btn.hidden{ display:none; }
+
+  .scope-note{ display:flex; gap:9px; align-items:flex-start; font-size:11px; line-height:1.5; color:rgba(255,255,255,.82);
+    background:rgba(0,0,0,.42); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.12);
+    padding:11px 12px; border-radius:14px; margin:16px 0 14px; }
+  .scope-note b{ color:#fff; font-weight:600; }
+  .scope-note .sdot{ width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:3px; }
+
+  .self-only{ display:none; }
+  .phone.scen-self .self-only{ display:flex; }
+
+  /* ---------- later-branch bars ---------- */
+  .later-row{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .later-row .lday{ font-size:11px; color:var(--subtext); width:52px; flex-shrink:0; }
+  .later-row .lpill{ flex:1; height:22px; border-radius:7px; background:rgba(255,255,255,.06); position:relative; overflow:hidden; }
+  .later-row .lpill i{ position:absolute; inset:0; width:0; background:rgba(255,107,107,.30); transition:width .7s ease; }
+  .revealed .later-row .lpill i{ width:100%; }
+  .later-row .lpill.done i{ background:rgba(133,194,163,.32); }
+  .later-row .lres{ position:absolute; left:9px; top:50%; transform:translateY(-50%); font-size:10.5px; color:var(--text); opacity:0; transition:opacity .4s ease .5s; }
+  .revealed .later-row .lres{ opacity:1; }
+
+  /* ---------- home screen app labels ---------- */
+  .app-tile{ width:22%; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .app-tile .lbl{ font-size:9.5px; color:rgba(255,255,255,.72); text-align:center; line-height:1.1; }
+  .app-icon{ position:relative; }
+  .app-icon .watch{ position:absolute; top:-3px; right:-3px; width:13px; height:13px; border-radius:50%; background:var(--accent); border:2px solid rgba(20,28,24,.9); display:flex; align-items:center; justify-content:center; }
+  .app-icon .watch::after{ content:''; width:4px; height:4px; border-radius:50%; background:var(--accent-ink); }
+
+
+  /* ============ LIVE AMBIENT BACKGROUND (persists across every screen) ============ */
+  .amb{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0;
+    z-index:0; overflow:hidden; pointer-events:none; border-radius:inherit;
+  }
+  .amb-blob{
+    position:absolute; border-radius:50%;
+    filter:blur(52px); mix-blend-mode:screen;
+    transition:background-color 1.5s ease;
+    will-change:transform, opacity;
+  }
+  .amb-blob.a1{ width:280px; height:280px; top:-70px; left:-80px;
+    background-color:var(--b1,#5FA890); animation:ambDrift1 15s ease-in-out infinite; }
+  .amb-blob.a2{ width:240px; height:240px; bottom:-60px; right:-50px;
+    background-color:var(--b2,#6FA8DC); animation:ambDrift2 19s ease-in-out infinite; }
+  .amb-blob.a3{ width:200px; height:200px; top:30%; right:-60px;
+    background-color:var(--b3,#8FE0C0); animation:ambDrift3 17s ease-in-out infinite; }
+  .amb-blob.a4{ width:190px; height:190px; bottom:20%; left:-60px;
+    background-color:var(--b4,#4E9AA8); animation:ambDrift4 21s ease-in-out infinite; }
+
+  /* large amplitude + opacity swing so the motion is actually readable through the blur */
+  @keyframes ambDrift1{
+    0%{   transform:translate(0,0) scale(1);            opacity:.50 }
+    25%{  transform:translate(150px,90px) scale(1.34);  opacity:.62 }
+    50%{  transform:translate(60px,250px) scale(.74);   opacity:.34 }
+    75%{  transform:translate(-40px,120px) scale(1.18); opacity:.56 }
+    100%{ transform:translate(0,0) scale(1);            opacity:.50 }
+  }
+  @keyframes ambDrift2{
+    0%{   transform:translate(0,0) scale(1);              opacity:.44 }
+    27%{  transform:translate(-140px,-110px) scale(1.3);  opacity:.58 }
+    54%{  transform:translate(-50px,-260px) scale(.72);   opacity:.28 }
+    80%{  transform:translate(90px,-80px) scale(1.2);     opacity:.50 }
+    100%{ transform:translate(0,0) scale(1);              opacity:.44 }
+  }
+  @keyframes ambDrift3{
+    0%{   transform:translate(0,0) scale(1);             opacity:.34 }
+    30%{  transform:translate(-170px,130px) scale(1.42); opacity:.50 }
+    62%{  transform:translate(-70px,-150px) scale(.68);  opacity:.22 }
+    100%{ transform:translate(0,0) scale(1);             opacity:.34 }
+  }
+  @keyframes ambDrift4{
+    0%{   transform:translate(0,0) scale(1);            opacity:.30 }
+    35%{  transform:translate(160px,-120px) scale(1.3); opacity:.46 }
+    68%{  transform:translate(60px,110px) scale(.74);   opacity:.20 }
+    100%{ transform:translate(0,0) scale(1);            opacity:.30 }
+  }
+
+  /* slow rotating wash — adds visible movement even where blobs overlap */
+  .amb-sweep{
+    position:absolute; top:-40%; left:-40%; width:180%; height:180%;
+    background:conic-gradient(from 0deg,
+      transparent 0deg,
+      var(--b3,#8FE0C0) 55deg,
+      transparent 130deg,
+      var(--b2,#6FA8DC) 215deg,
+      transparent 300deg);
+    filter:blur(64px); opacity:.16; mix-blend-mode:screen;
+    animation:ambSweep 34s linear infinite;
+    transition:opacity 1.5s ease;
+  }
+  @keyframes ambSweep{ to{ transform:rotate(360deg); } }
+  .phone.on-feed .amb-sweep{ opacity:.24; }
+
+  .amb-grain{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0;
+    background-image:radial-gradient(rgba(255,255,255,.42) 1px, transparent 1px);
+    background-size:3px 3px; opacity:.035; mix-blend-mode:overlay;
+  }
+  /* the feed is meant to feel loud — let the ambience run hotter and faster there */
+  .phone.on-feed .amb-blob{ filter:blur(60px); }
+
+  /* ============ IDLE MOTION ============ */
+  @keyframes idleBreath{
+    0%,100%{ box-shadow:0 10px 26px rgba(111,168,147,.26); transform:translateY(0); }
+    50%{ box-shadow:0 14px 36px rgba(133,194,163,.46); transform:translateY(-1.5px); }
+  }
+  .primary-btn{ animation:idleBreath 4.6s ease-in-out infinite; }
+  .primary-btn:hover, .primary-btn:active{ animation-play-state:paused; }
+
+  @keyframes sheen{
+    0%{ left:-65%; } 52%{ left:125%; } 100%{ left:125%; }
+  }
+  .tap-card, .scen-card, .branch-card, .dash-card, .compare-panel{ position:relative; overflow:hidden; }
+  .tap-card::after, .scen-card::after, .branch-card::after, .dash-card::after{
+    content:''; position:absolute; top:0; left:-65%; width:42%; height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,.075), transparent);
+    pointer-events:none; z-index:1;
+    animation:sheen 8.5s ease-in-out infinite;
+  }
+  .tap-card:nth-child(2)::after{ animation-delay:1.1s }
+  .tap-card:nth-child(3)::after{ animation-delay:2.2s }
+  .tap-card:nth-child(4)::after{ animation-delay:3.3s }
+  .tap-card:nth-child(5)::after{ animation-delay:4.4s }
+  .tap-card:nth-child(6)::after{ animation-delay:5.5s }
+  .scen-card:nth-child(even)::after{ animation-delay:2.4s }
+  .dash-card::after{ animation-duration:11s; }
+  .branch-card::after{ animation-duration:10s; animation-delay:.8s; }
+
+  @keyframes tdotPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(183,156,255,.55); }
+    55%{ box-shadow:0 0 0 4.5px rgba(183,156,255,0); }
+  }
+  .theory-tag .tdot{ animation:tdotPulse 3.2s ease-in-out infinite; }
+
+  @keyframes iconFloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-2px) } }
+  .tap-card svg, .scen-ic{ animation:iconFloat 5.4s ease-in-out infinite; }
+  .tap-card:nth-child(even) svg{ animation-delay:1.6s }
+
+  @keyframes flowPulse{ 0%,100%{ opacity:.55 } 50%{ opacity:1 } }
+  .compare-panel .flow-arrow{ animation:flowPulse 3.4s ease-in-out infinite; }
+  .compare-panel .flow-arrow:nth-of-type(2){ animation-delay:.7s }
+
+  /* ============ PAX VEIL (closing beat) ============ */
+  .pax-veil{
+    position:absolute; inset:0; top:0; right:0; bottom:0; left:0; z-index:75;
+    display:flex; align-items:center; justify-content:center;
+    background:#070B09;
+    opacity:0; visibility:hidden;
+    transition:opacity 1.5s ease, visibility 0s linear 1.5s;
+  }
+  .pax-veil.show{ opacity:1; visibility:visible; transition:opacity .75s ease; }
+  .pax-inner{ text-align:center; padding:0 40px; }
+  .pax-mark{
+    width:30px; height:30px; margin:0 auto 22px; border-radius:50%;
+    border:1px solid rgba(133,194,163,.55); position:relative;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-mark::after{
+    content:''; position:absolute; inset:8px; top:8px; right:8px; bottom:8px; left:8px;
+    border-radius:50%; background:var(--accent); opacity:.85;
+  }
+  .pax-lat{
+    font-family:var(--font-display); font-size:21px; font-weight:600;
+    letter-spacing:.01em; color:#E9F1EB; margin-bottom:7px;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-en{
+    font-size:13px; color:#7E948A; letter-spacing:.02em;
+    opacity:0; animation-fill-mode:forwards;
+  }
+  .pax-veil.show .pax-mark{ animation:paxIn 1.1s cubic-bezier(.22,1,.36,1) .25s forwards; }
+  .pax-veil.show .pax-lat{ animation:paxIn 1.2s cubic-bezier(.22,1,.36,1) .55s forwards; }
+  .pax-veil.show .pax-en{ animation:paxIn 1.2s cubic-bezier(.22,1,.36,1) .95s forwards; }
+  @keyframes paxIn{ from{ opacity:0; transform:translateY(7px); filter:blur(5px); } to{ opacity:1; transform:translateY(0); filter:blur(0); } }
+  .pax-veil .pax-glow{
+    position:absolute; width:260px; height:260px; border-radius:50%;
+    background:var(--accent); filter:blur(90px); opacity:.10;
+    animation:paxBreathe 7s ease-in-out infinite;
+  }
+  @keyframes paxBreathe{ 0%,100%{ transform:scale(1); opacity:.08 } 50%{ transform:scale(1.18); opacity:.15 } }
+
+
+  /* ---------- instructor view ---------- */
+  .ins-stats{ display:flex; gap:9px; margin-bottom:14px; }
+  .ins-stat{ flex:1; padding:11px 10px; border-radius:16px; text-align:center;
+    background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09); }
+  .ins-stat .isv{ font-family:var(--font-display); font-size:19px; font-weight:650; color:var(--text); line-height:1.1; }
+  .ins-stat .isl{ font-size:10px; color:var(--faint); margin-top:3px; }
+  .bar-pct{ font-size:11px; color:var(--subtext); width:32px; text-align:right; flex-shrink:0; }
+
+  .trend{ margin-top:2px; }
+  .trend-svg{ width:100%; height:92px; display:block; }
+  .tgrid{ stroke:rgba(255,255,255,.06); stroke-width:1; }
+  .tarea{ fill:rgba(133,194,163,.13); }
+  .tline{ fill:none; stroke:var(--accent); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .tdotpt{ fill:var(--surface-2); stroke:var(--accent); stroke-width:2; }
+  .tdotpt.last{ fill:var(--accent); }
+  .trend-x{ display:flex; justify-content:space-between; margin-top:5px; padding:0 2px; }
+  .trend-x span{ font-size:9.5px; color:var(--faint); }
+  .trend-note{ font-size:11.5px; color:var(--subtext); margin-top:10px; line-height:1.45; }
+  .trend-note .up{ color:#E8A87C; font-weight:600; }
+
+
+  /* ---------- context-conditional blocks ---------- */
+  .ctx-self{ display:none; }
+  .phone.scen-self .ctx-self{ display:block; }
+  .phone.scen-self .ctx-class{ display:none; }
+  .phone.theory-on .theory-tag.ctx-self{ display:none; }
+  .phone.scen-self.theory-on .theory-tag.ctx-self{ display:inline-flex; }
+
+  .ping-out{ display:flex; gap:8px; align-items:flex-start; font-size:11.5px; line-height:1.45; color:var(--subtext);
+    background:rgba(133,194,163,.10); border:1px solid rgba(133,194,163,.22);
+    padding:9px 11px; border-radius:12px; margin-top:12px;
+    opacity:0; max-height:0; overflow:hidden; transition:opacity .45s ease .25s, max-height .45s ease, margin-top .45s ease; }
+  .revealed .ping-out{ opacity:1; max-height:90px; }
+  .ping-out b{ color:var(--text); font-weight:600; }
+  .ping-out .po-dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:4px; }
+
+  .room-card{ margin-top:12px; padding:13px; border-radius:16px;
+    background:rgba(38,54,46,.55); border:1px solid rgba(133,194,163,.22); }
+  .rc-top{ display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .rc-live{ width:8px; height:8px; border-radius:50%; background:var(--accent); position:relative; flex-shrink:0; }
+  .rc-live::after{ content:''; position:absolute; inset:-4px; top:-4px; right:-4px; bottom:-4px; left:-4px;
+    border-radius:50%; border:1.5px solid var(--accent); animation:pulseRing 2s ease-out infinite; }
+  .rc-t{ font-size:13px; font-weight:600; color:var(--text); }
+  .rc-s{ font-size:11.5px; color:var(--subtext); line-height:1.45; }
+
+
+  /* ---------- back chip on branch screens ---------- */
+  .back-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; color:var(--subtext);
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08);
+    padding:7px 13px 7px 10px; border-radius:100px; margin-bottom:12px; align-self:flex-start;
+    transition:background .18s ease, color .18s ease, transform .18s ease, border-color .18s ease;
+  }
+  .back-chip:hover{ background:rgba(255,255,255,.12); color:var(--text); border-color:rgba(255,255,255,.16); transform:translateX(-2px); }
+  .back-chip:active{ transform:translateX(-1px) scale(.97); }
+  .back-chip svg{ width:13px; height:13px; }
+
+
+  /* ---------- instructor view: roomier ---------- */
+  .ins .branch-card{ padding:22px 20px; margin-bottom:18px; }
+  .ins .branch-label{ font-size:12.5px; margin-bottom:16px; color:var(--subtext); }
+  .ins .headline{ margin-bottom:10px; }
+  .ins .sub{ margin-bottom:22px; }
+
+  .ins-stats{ display:flex; gap:10px; margin-bottom:20px; }
+  .ins-stat{ flex:1; padding:16px 10px; border-radius:18px; text-align:center;
+    background:rgba(38,54,46,.5); border:1px solid rgba(255,255,255,.09); }
+  .ins-stat .isv{ font-family:var(--font-display); font-size:24px; font-weight:650; color:var(--text); line-height:1.05; }
+  .ins-stat .isl{ font-size:10.5px; color:var(--faint); margin-top:6px; line-height:1.3; }
+
+  .ins .bars{ gap:15px; margin-top:2px; }
+  .ins .bar-row{ gap:11px; }
+  .ins .bar-row .tag-name{ width:100px; font-size:12px; color:var(--text); white-space:nowrap; }
+  .ins .bar-track{ height:11px; border-radius:6px; }
+  .ins .bar-pct{ font-size:12.5px; width:38px; font-weight:600; color:var(--text); }
+
+  .trend-svg{ width:100%; height:140px; display:block; }
+  .tline{ stroke-width:2.6; }
+  .trend-x{ margin-top:9px; }
+  .trend-x span{ font-size:10.5px; }
+  .trend-note{ font-size:12.5px; margin-top:14px; padding-top:13px; border-top:1px solid var(--line); }
+
+  @media (max-width:480px){
+    body{ padding:0; align-items:stretch; }
+    .rig{ width:100%; height:100%; gap:0; }
+    .brand-row{ display:none; }
+    .phone{ width:100%; height:100dvh; border-radius:0; box-shadow:none; }
+    .steps{ top:52px; }
+    .restart{ top:48px; }
+    .theory-toggle{ top:48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <div class="brand-row"><span class="mark"></span> Tether — clickable prototype</div>
+
+  <div class="phone">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="icons">
+        <svg viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+        <svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4.5a10 10 0 0 1 13 0"/><path d="M4 7.3a6 6 0 0 1 8 0"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/></svg>
+        <svg viewBox="0 0 25 12" fill="none"><rect x="0.75" y="0.75" width="20.5" height="10.5" rx="2.5" stroke="currentColor" stroke-width="1.2"/><rect x="2.25" y="2.25" width="16" height="7.5" rx="1.3" fill="currentColor"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor"/></svg>
+      </span>
+    </div>
+    <div class="island"></div>
+    <div class="steps" id="steps">
+      <div class="dot" data-stage="0"></div><div class="dot" data-stage="1"></div><div class="dot" data-stage="2"></div><div class="dot" data-stage="3"></div><div class="dot" data-stage="4"></div><div class="dot" data-stage="5"></div><div class="dot" data-stage="6"></div>
+    </div>
+    <div class="chrome-right">
+      <button class="chip-btn hidden" id="instructorBtn">Instructor</button>
+      <button class="chip-btn hidden" id="restartBtn">Restart</button>
+    </div>
+    <button class="theory-toggle" id="theoryToggle" aria-pressed="false"><span class="ttoggle-dot"></span>Theory tags</button>
+    <div class="home-indicator"></div>
+
+    <div class="amb" id="amb">
+      <span class="amb-blob a1"></span>
+      <span class="amb-blob a2"></span>
+      <span class="amb-blob a3"></span>
+      <span class="amb-blob a4"></span>
+      <span class="amb-sweep"></span>
+      <span class="amb-grain"></span>
+    </div>
+
+    <div class="screens">
+
+      <!-- SCREEN 0: INTRO / BEFORE-AFTER -->
+      <section class="screen active" id="screen-intro" data-stage="0">
+        <div class="screen-pad">
+          <div class="eyebrow">11:47 PM · Chapter 4, half-done · phone buzzes</div>
+          <h1 class="headline">One habit, two paths</h1>
+          <p class="sub">Same trigger. Two very different endings.</p>
+
+          <div class="compare-wrap">
+            <div class="compare-panel loop">
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M10 18h4"/></svg></div>
+              <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="4" rx="1"/><rect x="4" y="10" width="16" height="4" rx="1"/><rect x="4" y="16" width="10" height="4" rx="1"/></svg></div>
+              <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+              <div class="loopback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12a8 8 0 1 1 2.5 5.8"/><path d="M4 12V7M4 12h5"/></svg></div>
+              <div class="panel-title">The usual loop</div>
+              <div class="panel-caption">Repeats, no exit</div>
+            </div>
+            <div class="compare-panel path">
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+              <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg></div>
+              <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="flow-node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 6h6v6"/></svg></div>
+              <div class="panel-title">With Tether</div>
+              <div class="panel-caption">Redirects, then reinforces</div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+          <button class="primary-btn" data-goto="context" data-stage="1">See it in action</button>
+        </div>
+      </section>
+
+
+      <!-- SCREEN 1: HOW TETHER KNOWS YOUR ROUTINE + SCENARIO PICKER -->
+      <section class="screen scroll" id="screen-context" data-stage="1">
+        <div class="dot-pattern"></div>
+        <div class="screen-pad">
+          <div class="eyebrow">Before it ever interrupts</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="context"><span class="tdot"></span>Context-Aware Triggering<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="implementation"><span class="tdot"></span>Implementation Intentions<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">Tether knows your week</h1>
+          <p class="sub">It never guesses at a good moment. Your routine comes from two places.</p>
+
+          <div class="sync-row">
+            <span class="live-dot"></span>
+            <div class="st"><b>Calendar synced</b> — institute timetable feed + your own Google Calendar, read-only.</div>
+          </div>
+          <div class="sync-row" style="background:rgba(111,168,220,.10); border-color:rgba(111,168,220,.22);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#6FA8DC" stroke-width="1.7"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/><path d="M12 7.5V12l3 1.8"/></svg>
+            <div class="st"><b style="color:#6FA8DC">Learned over 3 weeks</b> — blocks you reliably study in, even with nothing on the calendar.</div>
+          </div>
+
+          <div class="tl">
+            <div class="tl-item">
+              <div class="tl-time">08:30 — 10:00</div>
+              <div class="tl-title">Financial Institutions &amp; Markets</div>
+              <div class="tl-src"><span class="sq" style="background:#6FA8DC"></span>Institute timetable</div>
+            </div>
+            <div class="tl-item now">
+              <div class="tl-time">10:15 — 11:45 · happening now</div>
+              <div class="tl-title">Consumer Behaviour</div>
+              <div class="tl-src"><span class="sq" style="background:#6FA8DC"></span>Institute timetable</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">16:00 — 17:30</div>
+              <div class="tl-title">Self-study — you usually work here</div>
+              <div class="tl-src"><span class="sq" style="background:var(--accent)"></span>Learned pattern · 11 of the last 14 days</div>
+            </div>
+          </div>
+
+          <div class="note-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+            <div><b>You stay in charge.</b> Every block can be edited, muted or deleted. Tether reads the clock and which app is open — never what is on your screen.</div>
+          </div>
+
+          <p class="sub" style="margin:20px 0 8px;">Pick a moment to simulate:</p>
+
+          <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="class">
+            <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5 12 4l9 3.5-9 3.5-9-3.5Z"/><path d="M7 10v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V10"/><path d="M21 7.5V13"/></svg></span>
+            <span class="scen-txt">
+              <span class="scen-t">In a scheduled class</span>
+              <span class="scen-s">Tue 10:15 · Consumer Behaviour · from the timetable</span>
+            </span>
+            <span class="scen-go">→</span>
+          </button>
+
+          <button class="scen-card" data-goto="feed" data-stage="2" data-scenario="self">
+            <span class="scen-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.5v5l3.2 1.9"/><circle cx="12" cy="12" r="8.5"/></svg></span>
+            <span class="scen-txt">
+              <span class="scen-t">Outside class hours</span>
+              <span class="scen-s">Sun 16:00 · a study block you set yourself</span>
+            </span>
+            <span class="scen-go">→</span>
+          </button>
+
+          <div class="note-card" style="margin-bottom:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 8.2v4.4M12 15.6v.2"/></svg>
+            <div>The check-in adapts to context — a self-set block surfaces <b>two extra options</b> that make no sense during a lecture.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: FEED / INTERCEPTION -->
+      <section class="screen" id="screen-feed" data-stage="2">
+        <div class="app-topbar">
+          <div class="app-wordmark"><span class="dot"></span>feed</div>
+          <div class="topbar-icons">
+            <button class="icon-btn" aria-label="Activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.8 4.7 6 4.2c2-.3 3.6.8 6 3 2.4-2.2 4-3.3 6-3 3.2.5 4.8 3.8 3.3 7C19 15.6 12 20 12 20Z"/></svg></button>
+            <button class="icon-btn" aria-label="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l18-8-8 18-2.5-7.5L3 11Z"/></svg></button>
+          </div>
+        </div>
+
+        <div class="stories-row">
+          <div class="story"><div class="ring you"><div class="core">+</div></div><span>You</span></div>
+          <div class="story"><div class="ring"><div class="core">P</div></div><span>priya</span></div>
+          <div class="story"><div class="ring"><div class="core">A</div></div><span>arjun</span></div>
+          <div class="story"><div class="ring seen"><div class="core">S</div></div><span>simran</span></div>
+          <div class="story"><div class="ring"><div class="core">K</div></div><span>kabir</span></div>
+          <div class="story"><div class="ring seen"><div class="core">R</div></div><span>riya</span></div>
+        </div>
+
+        <div class="feed-scroll">
+          <div class="post" id="firstPost">
+            <div class="post-user-row"><div class="avatar"></div><div class="meta"><div class="post-name">priya.k</div><div class="post-time">Campus food fest · 2h</div></div><button class="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button></div>
+            <div class="post-media m1 grain" id="doubleTapMedia">
+              <div class="heart-burst" id="heartBurst"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.8 4.7 6 4.2c2-.3 3.6.8 6 3 2.4-2.2 4-3.3 6-3 3.2.5 4.8 3.8 3.3 7C19 15.6 12 20 12 20Z"/></svg></div>
+            </div>
+            <div class="post-actions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.8 4.7 6 4.2c2-.3 3.6.8 6 3 2.4-2.2 4-3.3 6-3 3.2.5 4.8 3.8 3.3 7C19 15.6 12 20 12 20Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1L21 3l-1.2 4.1c.8 1.3 1.2 2.8 1.2 4.4Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l18-8-8 18-2.5-7.5L3 11Z"/></svg>
+              <svg class="push" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4v16l7-5 7 5V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1Z"/></svg>
+            </div>
+            <div class="post-likes">241 likes</div>
+            <div class="post-caption"><b>priya.k</b> best 30 minutes of my week fr 🎪</div>
+          </div>
+
+          <div class="post">
+            <div class="post-user-row"><div class="avatar"></div><div class="meta"><div class="post-name">arjun.m</div><div class="post-time">Late night gym · 4h</div></div><button class="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button></div>
+            <div class="post-media m2 grain"></div>
+            <div class="post-actions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.8 4.7 6 4.2c2-.3 3.6.8 6 3 2.4-2.2 4-3.3 6-3 3.2.5 4.8 3.8 3.3 7C19 15.6 12 20 12 20Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1L21 3l-1.2 4.1c.8 1.3 1.2 2.8 1.2 4.4Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l18-8-8 18-2.5-7.5L3 11Z"/></svg>
+              <svg class="push" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4v16l7-5 7 5V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1Z"/></svg>
+            </div>
+            <div class="post-likes">108 likes</div>
+            <div class="post-caption"><b>arjun.m</b> 11pm is when the gym gets good</div>
+          </div>
+
+          <div class="post">
+            <div class="post-user-row"><div class="avatar"></div><div class="meta"><div class="post-name">simran.d</div><div class="post-time">Hostel sunset · 6h</div></div><button class="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button></div>
+            <div class="post-media m3 grain"></div>
+            <div class="post-actions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7-4.4-9.3-8.8C1.2 8 2.8 4.7 6 4.2c2-.3 3.6.8 6 3 2.4-2.2 4-3.3 6-3 3.2.5 4.8 3.8 3.3 7C19 15.6 12 20 12 20Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1L21 3l-1.2 4.1c.8 1.3 1.2 2.8 1.2 4.4Z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l18-8-8 18-2.5-7.5L3 11Z"/></svg>
+              <svg class="push" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4v16l7-5 7 5V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1Z"/></svg>
+            </div>
+            <div class="post-likes">312 likes</div>
+            <div class="post-caption"><b>simran.d</b> ok this view lowkey unreal</div>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-8Z"/></svg></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="M12 8v8M8 12h8"/></svg></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M10 10l5 2.5L10 15V10Z" fill="currentColor" stroke="none"/></svg></div>
+          <div class="nav-item profile"></div>
+        </div>
+
+        <div class="intercept-overlay" id="interceptOverlay">
+          <div class="intercept-card beam">
+            <div class="liquid-bg"><span class="blob b1" style="--blob:#5FA890"></span><span class="blob b2" style="--blob:#6FA8DC"></span><span class="blob b3" style="--blob:#8FE0C0"></span></div>
+            <div class="tag"><span class="mark"></span> Tether</div>
+            <div class="ic-ctx" id="icCtx"><span class="sq"></span>Consumer Behaviour · 10:15–11:45 · from your timetable</div>
+            <div class="theory-row">
+              <button class="theory-tag" data-theory="cue"><span class="tdot"></span>Cue–Routine–Reward Interception<span class="texpand">+</span></button>
+              <button class="theory-tag" data-theory="autonomy"><span class="tdot"></span>Autonomy &amp; Reactance<span class="texpand">+</span></button>
+            </div>
+            <h2 class="tg" id="icHead"><span>Ten</span> <span>seconds,</span> <span>then</span> <span>you're</span> <span>free</span> <span>to</span> <span>go.</span></h2>
+            <p id="icSub">You opened this while your Consumer Behaviour class was still running.</p>
+            <div class="ic-bar"><i></i></div>
+            <div class="ic-why">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/></svg>
+              <div><b>Tether never blocks or locks anything.</b> One tap tells us what you were feeling — then the feed is yours again, whatever you choose.</div>
+            </div>
+            <button class="primary-btn" data-goto="checkin" data-stage="3">I need to breathe</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: CHECK-IN -->
+      <section class="screen" id="screen-checkin" data-stage="3">
+        <div class="screen-pad">
+          <div class="eyebrow" id="ckEyebrow">Quick check-in · Consumer Behaviour</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="hook"><span class="tdot"></span>Hook Model — Action<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="selfreport"><span class="tdot"></span>Self-Report as Intervention<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">What's pulling you right now?</h1>
+          <p class="sub">One tap. No typing, no judgement — this is the whole ask.</p>
+          <div class="trigger-grid">
+            <button class="tap-card glass-surface" data-goto="branch-connection" data-stage="4" data-label="Feeling disconnected">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="9" r="3.2"/><circle cx="16" cy="9" r="3.2"/><path d="M3 19c.5-3 2.3-4.6 5-4.6s4.5 1.6 5 4.6"/><path d="M11 19c.5-3 2.3-4.6 5-4.6s4.5 1.6 5 4.6"/></svg>
+              <span>Feeling disconnected</span>
+            </button>
+            <button class="tap-card glass-surface" data-goto="branch-overcommit" data-stage="4" data-label="Lost track of time">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h10M7 21h10M7 3c0 4 2.5 5 5 8-2.5 3-5 4-5 8M17 3c0 4-2.5 5-5 8 2.5 3 5 4 5 8"/></svg>
+              <span>Lost track of time</span>
+            </button>
+            <button class="tap-card glass-surface" data-goto="branch-pacing" data-stage="4" data-label="This is dragging">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8c3-2 6 2 9 0s6-2 9 0"/><path d="M3 13c3-2 6 2 9 0s6-2 9 0"/><path d="M3 18c3-2 6 2 9 0s6-2 9 0"/></svg>
+              <span>This is dragging</span>
+            </button>
+            <button class="tap-card glass-surface" data-goto="branch-relevance" data-stage="4" data-label="Not sure this matters">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1.9-1.1 1.7"/><circle cx="12" cy="16.6" r=".4" fill="currentColor"/></svg>
+              <span>Not sure this matters</span>
+            </button>
+            <button class="tap-card glass-surface self-only" data-goto="branch-commitment" data-stage="4" data-label="Nothing's holding me to this">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.5 14.5 14.5 9.5"/><path d="M13 7.5l1.6-1.6a3.6 3.6 0 0 1 5.1 5.1L18 12.6"/><path d="M11 16.5l-1.6 1.6a3.6 3.6 0 0 1-5.1-5.1L6 11.4"/></svg>
+              <span>Nothing's holding me to this</span>
+            </button>
+            <button class="tap-card glass-surface self-only" data-goto="branch-later" data-stage="4" data-label="I'll just do it later">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-5h5"/><path d="M12 7.8V12l3 1.8"/></svg>
+              <span>I'll just do it later</span>
+            </button>
+          </div>
+          <div class="note-card" id="ckNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+            <div>Whatever you tap, the next screen is short and then Tether steps out. <b>Nothing here stops you returning to the feed.</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3a: CONNECTION -->
+      <section class="screen" id="screen-branch-connection" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow" id="connEyebrow">Feeling disconnected</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="belonging"><span class="tdot"></span>Need for Belonging (FOMO)<span class="texpand">+</span></button>
+            <button class="theory-tag ctx-self" data-theory="coregulation"><span class="tdot"></span>Social Co-Regulation<span class="texpand">+</span></button>
+          </div>
+
+          <!-- IN CLASS: the room is already shared, so the ping is silent + in-room -->
+          <div class="ctx-class">
+            <h1 class="headline">Same room, same slide</h1>
+            <p class="sub">Nine others are in this lecture with Tether on. A silent wave, nothing more.</p>
+            <div class="branch-card glass-surface">
+              <div class="branch-label">In this class right now</div>
+              <div class="buddy-list">
+                <div class="buddy"><div class="initial">P<span class="dotstat"></span></div><div class="info"><div class="name">Priya</div><div class="status">in class · row 3</div></div><div class="reaction">👋</div></div>
+                <div class="buddy"><div class="initial">A<span class="dotstat"></span></div><div class="info"><div class="name">Arjun</div><div class="status">in class</div></div><div class="reaction">✌️</div></div>
+                <div class="buddy"><div class="initial">+7</div><div class="info"><div class="name">7 others</div><div class="status">checked in this session</div></div><div class="reaction">✨</div></div>
+              </div>
+              <div class="ping-out ctx-class-out">
+                <span class="po-dot"></span>
+                <div>Wave sent silently — no notification, no buzz. <b>Priya waved back.</b></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OUTSIDE CLASS: nobody shares the room, so presence has to be built -->
+          <div class="ctx-self">
+            <h1 class="headline">Nobody's in the room</h1>
+            <p class="sub">Sunday afternoon — so instead of a wave, Tether opens a quiet shared block.</p>
+            <div class="branch-card glass-surface">
+              <div class="branch-label">Who's studying right now</div>
+              <div class="buddy-list">
+                <div class="buddy"><div class="initial">S<span class="dotstat"></span></div><div class="info"><div class="name">Simran</div><div class="status">in her own block · 40 min in</div></div><div class="reaction">📖</div></div>
+                <div class="buddy"><div class="initial">A<span class="dotstat away"></span></div><div class="info"><div class="name">Arjun</div><div class="status">free — would join if asked</div></div><div class="reaction">💬</div></div>
+              </div>
+              <div class="room-card">
+                <div class="rc-top">
+                  <span class="rc-live"></span>
+                  <div class="rc-t">Quiet room · 2 studying</div>
+                </div>
+                <div class="rc-s">No video, no chat. Just a timer you're both inside of, and a nudge if either of you drops out early.</div>
+                <div class="ping-out ctx-self-out">
+                  <span class="po-dot"></span>
+                  <div><b>Simran joined your room.</b> Both timers now run to 17:00.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal" id="connBtn">Send a silent wave</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-connection">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 3b: OVER-COMMIT -->
+      <section class="screen" id="screen-branch-overcommit" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow">Lost track of time</div>
+          <button class="theory-tag" data-theory="planning"><span class="tdot"></span>Planning Fallacy<span class="texpand">+</span></button>
+          <h1 class="headline">How much is actually left?</h1>
+          <p class="sub">Consumer Behaviour · Attitudes &amp; Persuasion</p>
+          <div class="branch-card glass-surface">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 70 70"><circle class="ring-track" cx="35" cy="35" r="31"/><circle class="ring-fill" cx="35" cy="35" r="31"/></svg>
+              <div class="ring-copy"><div class="big">22 min</div><div class="small">estimated remaining</div></div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Start focused sprint</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-overcommit">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 3c: PACING -->
+      <section class="screen" id="screen-branch-pacing" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow">This is dragging</div>
+          <button class="theory-tag" data-theory="effort"><span class="tdot"></span>Effort Perception &amp; Boredom<span class="texpand">+</span></button>
+          <h1 class="headline">Compress this section?</h1>
+          <p class="sub">Same material, tighter pace.</p>
+          <div class="branch-card glass-surface">
+            <div class="content-block">
+              <div class="full-lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+              <div class="compressed">
+                <div class="pt">Attitude = belief + feeling + intended action</div>
+                <div class="pt">ELM: central route persuades on logic, peripheral route on cues</div>
+                <div class="pt">Cognitive dissonance pushes people to justify choices after buying</div>
+              </div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Compress this section</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-pacing">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 3d: RELEVANCE -->
+      <section class="screen" id="screen-branch-relevance" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow">Not sure this matters</div>
+          <button class="theory-tag" data-theory="expectancy"><span class="tdot"></span>Expectancy-Value Theory<span class="texpand">+</span></button>
+          <h1 class="headline">Why this shows up</h1>
+          <p class="sub">A concrete reason, not a slogan.</p>
+          <div class="branch-card glass-surface">
+            <div class="relevance-fact">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4v16M4 4h13l-2.5 4L17 12H4"/></svg>
+              <p>This exact concept appeared in 3 of your last 5 CB quizzes.</p>
+            </div>
+            <div class="relevance-meter"><div class="fill"></div></div>
+            <div class="relevance-tagline">Tagged as high relevance for you</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Got it, tag as important</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-relevance">Continue</button>
+        </div>
+      </section>
+
+
+      <!-- BRANCH 3e: COMMITMENT (self-study only) -->
+      <section class="screen" id="screen-branch-commitment" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow">Nothing's holding me to this</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="commitment"><span class="tdot"></span>Commitment Devices<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="consistency"><span class="tdot"></span>Consistency Principle<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">You did set this, though</h1>
+          <p class="sub">Nobody assigned it. That's exactly why it's easy to drop.</p>
+          <div class="branch-card glass-surface">
+            <div class="branch-label">Your own commitment</div>
+            <div class="buddy-list">
+              <div class="buddy"><div class="initial">◷</div><div class="info"><div class="name">Sun 16:00 — 17:30</div><div class="status">CB reading · set by you on Thursday</div></div></div>
+              <div class="buddy"><div class="initial">P<span class="dotstat"></span></div><div class="info"><div class="name">Priya is in a block too</div><div class="status">until 17:00</div></div><div class="reaction">✳︎</div></div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Hold me to it</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-commitment">Continue</button>
+        </div>
+      </section>
+
+      <!-- BRANCH 3f: LATER (self-study only) -->
+      <section class="screen" id="screen-branch-later" data-stage="4">
+        <div class="screen-pad">
+          <button class="back-chip" data-goto="checkin" data-stage="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Not this one — go back</button>
+          <div class="eyebrow">I'll just do it later</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="presentbias"><span class="tdot"></span>Present Bias<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="planningfallacy2"><span class="tdot"></span>Planning Fallacy<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">What "later" looked like</h1>
+          <p class="sub">Your last five, no commentary.</p>
+          <div class="branch-card glass-surface">
+            <div class="later-row"><div class="lday">Mon</div><div class="lpill"><i></i><span class="lres">moved to Tue</span></div></div>
+            <div class="later-row"><div class="lday">Tue</div><div class="lpill"><i></i><span class="lres">moved to Thu</span></div></div>
+            <div class="later-row"><div class="lday">Thu</div><div class="lpill done"><i></i><span class="lres">done — 40 min</span></div></div>
+            <div class="later-row"><div class="lday">Fri</div><div class="lpill"><i></i><span class="lres">didn't happen</span></div></div>
+            <div class="later-row"><div class="lday">Sat</div><div class="lpill"><i></i><span class="lres">didn't happen</span></div></div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-action="reveal">Show me</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5" style="display:none;" id="continue-later">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: DASHBOARD -->
+      <section class="screen" id="screen-dashboard" data-stage="5">
+        <div class="screen-pad">
+          <div class="eyebrow">Your progress</div>
+          <div class="theory-row">
+            <button class="theory-tag" data-theory="reinforcement"><span class="tdot"></span>Reinforcement &amp; Variable Reward<span class="texpand">+</span></button>
+            <button class="theory-tag" data-theory="overjustification"><span class="tdot"></span>Overjustification Risk<span class="texpand">+</span></button>
+          </div>
+          <h1 class="headline">Back on track</h1>
+          <div class="today-note" id="todayNote">Today's check-in: —</div>
+          <div style="height:16px"></div>
+          <div class="dash-row">
+            <div class="dash-card glass-surface"><div class="label">Streak</div><div class="value">4 <span class="unit">days</span></div></div>
+            <div class="dash-card glass-surface"><div class="label">Estimate accuracy</div>
+              <svg class="spark" viewBox="0 0 100 34" preserveAspectRatio="none"><polyline points="0,28 20,24 40,22 60,14 80,10 100,6" fill="none" stroke="#85C2A3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+          <div class="dash-card glass-surface" style="margin-bottom:12px;">
+            <div class="label">Relevance map</div>
+            <div class="bars">
+              <div class="bar-row"><div class="tag-name">Attitudes</div><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div></div>
+              <div class="bar-row"><div class="tag-name">Perception</div><div class="bar-track"><div class="bar-fill" style="width:54%"></div></div></div>
+              <div class="bar-row"><div class="tag-name">Motivation</div><div class="bar-track"><div class="bar-fill" style="width:31%"></div></div></div>
+            </div>
+          </div>
+          <div class="dash-card glass-surface">
+            <div class="label">Study circle</div>
+            <div class="circle-row">
+              <div class="initial" style="width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">P</div>
+              <div class="initial" style="width:30px;height:30px;border-radius:50%;background:var(--surface-3);color:var(--text);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">A</div>
+              <div class="initial" style="width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">S</div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="note-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
+            <div><b>Next block:</b> Sun 16:00 self-study — learned, not assigned. <b>Edit or mute</b> any block from Settings.</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="primary-btn" data-goto="homescreen" data-stage="6">Close Tether</button>
+          <button class="ghost-btn" data-goto="instructor" data-stage="-1">Instructor view (anonymized) →</button>
+        </div>
+      </section>
+
+      <!-- SIDE SCREEN: INSTRUCTOR VIEW (anonymized, not part of student flow) -->
+      <section class="screen scroll" id="screen-instructor" data-stage="-1">
+        <div class="screen-pad ins">
+          <div class="eyebrow">Instructor view · CB · Section B</div>
+          <button class="theory-tag" data-theory="instructional"><span class="tdot"></span>Behavioural Signal as Feedback<span class="texpand">+</span></button>
+          <h1 class="headline">This week's check-ins</h1>
+          <p class="sub">Aggregated across 58 students · no individual data, ever.</p>
+
+          <div class="ins-stats">
+            <div class="ins-stat"><div class="isv">142</div><div class="isl">check-ins</div></div>
+            <div class="ins-stat"><div class="isv">58</div><div class="isl">students</div></div>
+            <div class="ins-stat"><div class="isv">61%</div><div class="isl">redirected</div></div>
+          </div>
+
+          <div class="branch-card glass-surface" style="margin-bottom:14px;">
+            <div class="branch-label">What students reported</div>
+            <div class="bars">
+              <div class="bar-row"><div class="tag-name">Dragging</div><div class="bar-track"><div class="bar-fill" style="width:41%"></div></div><div class="bar-pct">41%</div></div>
+              <div class="bar-row"><div class="tag-name">Time lost</div><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><div class="bar-pct">24%</div></div>
+              <div class="bar-row"><div class="tag-name">Disconnected</div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><div class="bar-pct">18%</div></div>
+              <div class="bar-row"><div class="tag-name">Not relevant</div><div class="bar-track"><div class="bar-fill" style="width:17%"></div></div><div class="bar-pct">17%</div></div>
+            </div>
+          </div>
+
+          <div class="branch-card glass-surface" style="margin-bottom:14px;">
+            <div class="branch-label">"Dragging" by session · last 6 weeks</div>
+            <div class="trend">
+              <svg viewBox="0 0 260 140" preserveAspectRatio="none" class="trend-svg">
+                <line x1="0" y1="30"  x2="260" y2="30"  class="tgrid"/>
+                <line x1="0" y1="65"  x2="260" y2="65"  class="tgrid"/>
+                <line x1="0" y1="100" x2="260" y2="100" class="tgrid"/>
+                <polygon class="tarea" points="10,104 58,93 106,78 154,62 202,40 250,20 250,140 10,140"/>
+                <polyline class="tline" points="10,104 58,93 106,78 154,62 202,40 250,20"/>
+                <circle class="tdotpt" cx="10"  cy="104" r="4"/>
+                <circle class="tdotpt" cx="58"  cy="93"  r="4"/>
+                <circle class="tdotpt" cx="106" cy="78"  r="4"/>
+                <circle class="tdotpt" cx="154" cy="62"  r="4"/>
+                <circle class="tdotpt" cx="202" cy="40"  r="4"/>
+                <circle class="tdotpt last" cx="250" cy="20" r="5.5"/>
+              </svg>
+              <div class="trend-x"><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span></div>
+            </div>
+            <div class="trend-note"><span class="up">▲ 18 pts</span> since Week 1 — the rise starts with Chapter 4.</div>
+          </div>
+
+          <div class="branch-card glass-surface">
+            <div class="branch-label">Insight</div>
+            <p style="font-size:13px;color:var(--text);line-height:1.55;">"Dragging" is now the dominant trigger and it is climbing, not flat. That points at pacing in the material rather than motivation in the cohort — worth a look at Chapter 4's length before the next session.</p>
+          </div>
+
+          <div class="note-card" style="margin-bottom:4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7.5 3.2v5c0 4.4-3.1 8.3-7.5 9.6-4.4-1.3-7.5-5.2-7.5-9.6v-5L12 3Z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+            <div>Counts only. <b>No names, no timestamps, no per-student history</b> — anonymity is what keeps the answers honest.</div>
+          </div>
+
+          <div class="spacer"></div>
+          <button class="primary-btn" data-goto="homescreen" data-stage="6">Close Tether</button>
+          <button class="ghost-btn" data-goto="dashboard" data-stage="5">← Back to student view</button>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-homescreen" data-stage="6">
+        <div class="home-mockup" id="homeMockup">
+          <div class="home-wallpaper"></div>
+          <div class="dim-note"><span class="ddot"></span>Tether dimmed your colors — back to normal shortly</div>
+          <div class="icon-grid">
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF7AB6"><span class="watch"></span></div><div class="lbl">Feed</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#4ECDC4"></div><div class="lbl">Notes</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#5B7FFF"><span class="watch"></span></div><div class="lbl">Reels</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FFB84C"></div><div class="lbl">Calendar</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#9B6BFF"><span class="watch"></span></div><div class="lbl">Chat</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#3ED598"></div><div class="lbl">Docs</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF6B6B"><span class="watch"></span></div><div class="lbl">Clips</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#4CC3FF"></div><div class="lbl">Mail</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FFD166"></div><div class="lbl">Calc</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#8B5CF6"><span class="watch"></span></div><div class="lbl">Timeline</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#FF9257"></div><div class="lbl">Drive</div></div>
+            <div class="app-tile"><div class="app-icon" style="--ic:#57D6C7"></div><div class="lbl">Tether</div></div>
+          </div>
+          <div class="scope-note">
+            <span class="sdot"></span>
+            <div>Only the dotted apps are watched — feed-based social. <b>Notes, Mail, Docs and Calendar never trigger Tether</b>, even mid-class.</div>
+          </div>
+          <div class="dock">
+            <div class="app-icon" style="--ic:#FF7AB6"><span class="watch"></span></div>
+            <div class="app-icon" style="--ic:#5B7FFF"><span class="watch"></span></div>
+            <div class="app-icon" style="--ic:#3ED598"></div>
+            <div class="app-icon" style="--ic:#4CC3FF"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="pax-veil" id="paxVeil">
+      <span class="pax-glow"></span>
+      <div class="pax-inner">
+        <div class="pax-mark"></div>
+        <div class="pax-lat">Pax in corde.</div>
+        <div class="pax-en">Peace in the heart.</div>
+      </div>
+    </div>
+
+    <div class="theory-modal" id="theoryModal">
+      <div class="tm-card">
+        <div class="tm-grip"></div>
+        <div class="tm-family" id="tmFamily"></div>
+        <div class="tm-name" id="tmName"></div>
+        <div class="tm-sec"><div class="tm-h">What the theory says</div><div class="tm-p" id="tmWhat"></div></div>
+        <div class="tm-sec"><div class="tm-h">How Tether applies it</div><div class="tm-p" id="tmHow"></div></div>
+        <div class="tm-sec"><div class="tm-h">Why it should change behaviour</div><div class="tm-p" id="tmWhy"></div></div>
+        <div class="tm-ev" id="tmEv"></div>
+        <button class="tm-close" id="tmClose">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var screens = document.querySelectorAll('.screen');
+  var dots = document.querySelectorAll('.dot');
+  var restartBtn = document.getElementById('restartBtn');
+  var instructorBtn = document.getElementById('instructorBtn');
+  var interceptOverlay = document.getElementById('interceptOverlay');
+  var todayNote = document.getElementById('todayNote');
+  var doubleTapMedia = document.getElementById('doubleTapMedia');
+  var heartBurst = document.getElementById('heartBurst');
+  var theoryToggle = document.getElementById('theoryToggle');
+  var phoneEl = document.querySelector('.phone');
+  var homeMockup = document.getElementById('homeMockup');
+  var paxVeil = document.getElementById('paxVeil');
+  var interceptTimer = null, colorTimer = null, paxTimer = null, paxTimer2 = null;
+  var lastStage = 1;
+
+  /* ---------------- live ambient palette, per screen ---------------- */
+  var AMB = {
+    'intro':              ['#5FA890','#6FA8DC','#8FE0C0','#4E9AA8'],
+    'context':            ['#5FA890','#6FA8DC','#8FE0C0','#5B93D6'],
+    'feed':               ['#FF3E7F','#8B5CF6','#FFC24B','#5B3EFF'],
+    'checkin':            ['#5FA890','#8FE0C0','#6FA8DC','#4E9AA8'],
+    'branch-connection':  ['#5B93D6','#7FA8E8','#9FC0F2','#6FA8DC'],
+    'branch-overcommit':  ['#5FA890','#7FC7A8','#9EE0C0','#4E9AA8'],
+    'branch-pacing':      ['#4FBF7C','#79D69E','#A0EEBE','#5FA890'],
+    'branch-relevance':   ['#7C82E0','#9D8CE8','#BCADF2','#6FA8DC'],
+    'branch-commitment':  ['#C9A24B','#DCC07A','#8FE0C0','#B08A3C'],
+    'branch-later':       ['#7C82E0','#9D8CE8','#BCADF2','#5B93D6'],
+    'dashboard':          ['#5FA890','#6FA8DC','#8FE0C0','#4E9AA8'],
+    'instructor':         ['#6B93B0','#8FADC2','#5A7E99','#4E9AA8'],
+    'homescreen':         ['#3B4C66','#5A4A78','#2E4A50','#3A3560']
+  };
+  function setAmbience(id){
+    var p = AMB[id] || AMB['intro'];
+    phoneEl.style.setProperty('--b1', p[0]);
+    phoneEl.style.setProperty('--b2', p[1]);
+    phoneEl.style.setProperty('--b3', p[2]);
+    phoneEl.style.setProperty('--b4', p[3]);
+  }
+
+  /* ---------------- theory library ---------------- */
+  var THEORY = {
+    context: {
+      family: 'Behavioural Design',
+      name: 'Context-Aware Triggering',
+      what: 'An intervention only works if it arrives at the decision point. Generic reminders fire when nothing is happening, so people learn to dismiss them without reading — the notification becomes noise.',
+      how: 'Tether reads two sources: the institute timetable / calendar feed, and a three-week learned pattern of when you actually study. It stays silent outside those windows.',
+      why: 'A prompt that only ever appears during a block you already committed to keeps its meaning. Dismissal becomes a signal rather than a reflex.',
+      ev: 'Survey (N=27): 78% hit unplanned Instagram use weekly or more — but only inside study time. The trigger has to be scoped to that, or it punishes ordinary phone use.'
+    },
+    implementation: {
+      family: 'Goal Pursuit',
+      name: 'Implementation Intentions',
+      what: 'Gollwitzer\u2019s work: goals framed as "when situation X arises, I will do Y" are acted on far more often than open-ended intentions like "I should study more".',
+      how: 'Every block in Tether is an if-then in disguise: when 10:15 Tuesday arrives, CB is the plan. The self-study blocks the app learns become the same structure without you writing it.',
+      why: 'The decision is pre-made at a calm moment, so the tired 11pm version of you is executing a plan rather than negotiating one.',
+      ev: 'Survey: 48% never estimate session length and 33% underestimate — the plan mostly does not exist to begin with.'
+    },
+    cue: {
+      family: 'Habit Formation',
+      name: 'Cue–Routine–Reward Interception',
+      what: 'Habits run as a loop: a cue fires, a routine executes automatically, a reward lands and strengthens the loop. Because the routine is automatic, willpower applied after it starts is usually too late.',
+      how: 'Tether inserts itself between the cue (fatigue, boredom, disconnection during a study block) and the routine (opening the feed). The card appears as the feed loads — the last moment the loop is still interruptible.',
+      why: 'You are not asking the student to resist a running habit; you are giving a competing behaviour a chance to start at all.',
+      ev: 'Survey: 67% said "guilt / realising time passed" is the only thing that ever pulls them back — awareness that arrives far too late. Tether supplies it early.'
+    },
+    autonomy: {
+      family: 'Motivation / Self-Determination',
+      name: 'Autonomy & Psychological Reactance',
+      what: 'Reactance theory (Brehm): when people feel a freedom is being removed, they push back — often by doing the restricted thing harder. Blockers and lockouts reliably produce workarounds and uninstalls.',
+      how: 'Tether never blocks, locks, or hides anything. It asks one question for ten seconds and then gets out of the way. The feed is still there and the student may absolutely go back to it.',
+      why: 'Preserving autonomy keeps the tool something students choose to keep installed. An app that is deleted in week two changes no behaviour at all.',
+      ev: 'Survey quote: "I love my phone" — not everyone frames this as a problem to be policed. A restrictive tool would lose that student immediately.'
+    },
+    hook: {
+      family: 'Habit Formation',
+      name: 'Hook Model — Action Stage',
+      what: 'Nir Eyal\u2019s Hook Model: Trigger \u2192 Action \u2192 Variable Reward \u2192 Investment. The Action must be the simplest possible behaviour in anticipation of the reward — every unit of friction loses users.',
+      how: 'The check-in is one tap on four (or six) large targets. No typing, no login, no scale from 1 to 10, no explanation required.',
+      why: 'A student who is already tired and mid-escape will abandon anything effortful. One tap is cheap enough to survive that moment.',
+      ev: 'Survey: 44% cite plain tiredness as the trigger. Any interface demanding real cognitive effort at that point simply gets dismissed.'
+    },
+    selfreport: {
+      family: 'Self-Regulation',
+      name: 'Self-Report as Intervention',
+      what: 'Naming an internal state changes it. Labelling an emotion or motive engages deliberate processing (System 2) and briefly interrupts automatic behaviour — the act of reporting is itself the intervention.',
+      how: 'Tether does not diagnose you. It asks what you were feeling and you answer in one tap. The answer routes the response, but the naming has already done work.',
+      why: 'This is why the app asks rather than blocks: the question creates the pause, and the student stays the expert on their own state.',
+      ev: 'The same mechanism explains why guilt (67%) works at all — it is self-noticing. Tether just moves that noticing 20 minutes earlier.'
+    },
+    belonging: {
+      family: 'Social Motivation',
+      name: 'Need for Belonging (FOMO)',
+      what: 'Belonging is a fundamental need, not a weakness. Feeling out of the loop produces genuine discomfort, and social media is the lowest-cost way to relieve it.',
+      how: 'Instead of denying the need, Tether satisfies it through a cheaper channel: a presence ping showing which friends are also in a study block right now. No chat, no feed, no scroll.',
+      why: 'Blocking access leaves the need unmet and the discomfort intact, so the student routes around the block. Meeting it in ten seconds removes the reason to scroll for twenty minutes.',
+      ev: 'Survey: 26% named "knowing a friend is also studying right now" as something that has genuinely pulled them back — equal to a friend actively messaging them.'
+    },
+    planning: {
+      family: 'Cognitive Bias',
+      name: 'Planning Fallacy',
+      what: 'Kahneman & Tversky: people systematically underestimate how long their own tasks will take, even when they have done the same task before and know they ran over.',
+      how: 'The branch surfaces a concrete estimate for what is actually left, derived from the student\u2019s own past sessions on similar material — not an optimistic guess.',
+      why: 'The "quick break" is affordable only if you believe there is slack later. Correcting the estimate removes the justification before it forms.',
+      ev: 'Strongest finding in the survey: 81% either never estimate (48%) or habitually underestimate (33%), and 70% take a "quick" break that runs long.'
+    },
+    planningfallacy2: {
+      family: 'Cognitive Bias',
+      name: 'Planning Fallacy (recall version)',
+      what: 'The bias survives experience because we remember intentions, not outcomes. Asked to plan, people simulate the ideal run of the task and quietly discard the times it went wrong.',
+      how: 'Rather than argue, Tether shows the record: the last five times this block was postponed and what actually happened to each one.',
+      why: 'Reference-class information — your own history, unedited — is the standard correction for this bias. It is far harder to dismiss than advice.',
+      ev: 'Survey: 70% recognise the "quick break that gets long" pattern in themselves, yet it repeats. Recognition alone is clearly not enough; the record is.'
+    },
+    effort: {
+      family: 'Attention & Effort',
+      name: 'Effort Perception & Boredom',
+      what: 'Disengagement often tracks pacing rather than interest. Content that feels slow drains attention even when the student genuinely cares about the subject.',
+      how: 'The branch offers a one-tap compression of the current section — same material, tighter delivery — so boredom has an exit that is not the phone.',
+      why: 'If the only escape from a slow section is Instagram, students will keep taking it. Give the escape a destination inside the work.',
+      ev: 'Survey: 37% named pacing ("the topic feels slow or repetitive") as their trigger — the second largest cause, and one no motivational appeal fixes.'
+    },
+    expectancy: {
+      family: 'Motivation',
+      name: 'Expectancy-Value Theory',
+      what: 'Motivation is a product of expectancy (can I do this?) and value (is it worth it?). If perceived value is near zero, effort follows regardless of ability or discipline.',
+      how: 'The branch supplies one concrete, verifiable reason this specific topic matters — appearance in past assessments, or a direct tie to work the student already cares about.',
+      why: 'Restoring perceived value addresses the actual cause. Telling a student to focus harder on something they have judged worthless does not.',
+      ev: 'Survey: 89% report engaging differently with interesting versus obligatory topics — 59% call the difference large. Engagement is conditional, not constant.'
+    },
+    commitment: {
+      family: 'Behavioural Economics',
+      name: 'Commitment Devices',
+      what: 'A commitment device is a constraint your present self accepts to bind your future self. It works precisely because it is chosen in advance, at a moment of clear thinking.',
+      how: 'Outside class hours there is no institution holding the student to anything, so Tether surfaces the commitment they made themselves — when they set it, and who else is in a block right now.',
+      why: 'Self-set blocks collapse first because nothing external defends them. Making the earlier choice visible restores some of that structure without an authority imposing it.',
+      ev: 'This branch only appears outside timetabled hours — in a lecture the institution is already the commitment device.'
+    },
+    consistency: {
+      family: 'Social Influence',
+      name: 'Consistency Principle',
+      what: 'Cialdini: once people make a choice, they experience pressure to behave consistently with it. Written or witnessed commitments hold considerably better than private ones.',
+      how: 'The block is shown as something the student actively scheduled on a named day, not as a generic reminder — and optionally as visible to two study-circle friends.',
+      why: 'Framing the session as keeping your own word converts an abstract task into a consistency question, which is a stronger motivator for most people.',
+      ev: 'Paired deliberately with a light social signal, never a public leaderboard — see the Overjustification note on the dashboard.'
+    },
+    presentbias: {
+      family: 'Behavioural Economics',
+      name: 'Present Bias / Temporal Discounting',
+      what: 'People steeply discount future rewards relative to immediate ones. "Later" feels costless because the cost is paid by a future self who is not present to object.',
+      how: 'Tether makes the future self concrete by showing what the last five "laters" turned into — a record, presented flatly, with no lecture attached.',
+      why: 'The bias survives on vagueness. Specific, personal evidence that later usually means never is the most direct correction available.',
+      ev: 'Survey: 70% say a "quick" break routinely runs long — the immediate option winning over the delayed one, repeatedly and predictably.'
+    },
+    reinforcement: {
+      family: 'Learning Theory',
+      name: 'Reinforcement & Variable Reward',
+      what: 'Behaviour followed by reward repeats. Skinner further showed that unpredictable (intermittent) reward sustains behaviour more durably than a fixed reward every time.',
+      how: 'The streak reinforces each successful redirect. Variability sits at the system level — which branch fires, and therefore which response you get, depends on the trigger, so the experience is never identical.',
+      why: 'A single successful redirect changes nothing. What matters is whether the loop survives across weeks, which is what reinforcement is for.',
+      ev: 'Honest caveat: a streak only reinforces if losing it feels costly. Loss aversion is doing the work, not the number itself.'
+    },
+    overjustification: {
+      family: 'Motivation',
+      name: 'Overjustification Effect',
+      what: 'Introducing external rewards for a behaviour can crowd out intrinsic motivation — once the reward stops, the behaviour often drops below its original level.',
+      how: 'Tether deliberately uses feedback (estimate accuracy, relevance map, presence) rather than prizes (points, badges, coins, leaderboards). Nothing is unlockable.',
+      why: 'Information about yourself supports intrinsic motivation; trophies substitute for it. The aim is a student who eventually does not need the app.',
+      ev: 'Stated as a design risk in the report rather than hidden — the one metric that tests it is redirect success on sessions where the streak has already broken.'
+    },
+    coregulation: {
+      family: 'Social Motivation',
+      name: 'Social Co-Regulation',
+      what: 'Self-regulation is easier when it is shared. Working alongside someone — even silently, even remotely — raises sustained attention, which is why libraries and co-working spaces function at all.',
+      how: 'In a lecture the room is already shared, so a silent wave is enough. On a Sunday nobody shares your room, so Tether opens a quiet block instead: two timers, no chat, and a nudge if either person drops out early.',
+      why: 'The belonging need outside class hours is structurally different — there is no ambient presence to tap into, so the app has to create a small one rather than point at an existing one.',
+      ev: 'Survey: 26% named "knowing a friend is also studying right now" as something that has genuinely pulled them back — equal to a friend actively messaging them, and far less disruptive.'
+    },
+    instructional: {
+      family: 'Systems / Feedback Loops',
+      name: 'Behavioural Signal as Instructional Feedback',
+      what: 'Aggregate behaviour carries information no individual interaction reveals. Patterns across a cohort can point at the environment rather than the individual.',
+      how: 'Check-in selections are aggregated anonymously into an instructor view. A spike in "this is dragging" during one chapter is a pacing signal about the material, not a discipline problem in students.',
+      why: 'It closes a second loop — student behaviour informing instructional design — and gives faculty a reason to support adoption.',
+      ev: 'Anonymisation is load-bearing: if answers were attributable, honest self-report would stop immediately and the signal would be worthless.'
+    }
+  };
+
+  /* ---------------- theory modal ---------------- */
+  var modal = document.getElementById('theoryModal');
+  function openTheory(key){
+    var t = THEORY[key];
+    if(!t) return;
+    document.getElementById('tmFamily').textContent = t.family;
+    document.getElementById('tmName').textContent = t.name;
+    document.getElementById('tmWhat').textContent = t.what;
+    document.getElementById('tmHow').textContent = t.how;
+    document.getElementById('tmWhy').textContent = t.why;
+    document.getElementById('tmEv').textContent = t.ev;
+    modal.querySelector('.tm-card').scrollTop = 0;
+    modal.classList.add('show');
+  }
+  function closeTheory(){ modal.classList.remove('show'); }
+  document.addEventListener('click', function(e){
+    var tag = e.target.closest('.theory-tag');
+    if(tag){ e.preventDefault(); e.stopPropagation(); openTheory(tag.dataset.theory); return; }
+  });
+  document.getElementById('tmClose').addEventListener('click', closeTheory);
+  modal.addEventListener('click', function(e){ if(e.target === modal) closeTheory(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeTheory(); });
+
+  /* ---------------- scenario ---------------- */
+  var SCEN = {
+    class: {
+      ctx: 'Consumer Behaviour · 10:15–11:45 · from your timetable',
+      sub: 'You opened this while your Consumer Behaviour class was still running.',
+      eyebrow: 'Quick check-in · Consumer Behaviour',
+      connEyebrow: 'Feeling disconnected · in class',
+      connBtn: 'Send a silent wave'
+    },
+    self: {
+      ctx: 'Self-study block · 16:00–17:30 · a block you set yourself',
+      sub: 'You opened this during a study block you scheduled for yourself on Thursday.',
+      eyebrow: 'Quick check-in · your own study block',
+      connEyebrow: 'Feeling disconnected · studying alone',
+      connBtn: 'Open a quiet room'
+    }
+  };
+  function setScenario(key){
+    var s = SCEN[key]; if(!s) return;
+    phoneEl.classList.toggle('scen-self', key === 'self');
+    var ctx = document.getElementById('icCtx');
+    var sub = document.getElementById('icSub');
+    var eb  = document.getElementById('ckEyebrow');
+    var ce  = document.getElementById('connEyebrow');
+    var cb  = document.getElementById('connBtn');
+    if(ctx) ctx.lastChild.textContent = s.ctx;
+    if(sub) sub.textContent = s.sub;
+    if(eb) eb.textContent = s.eyebrow;
+    if(ce) ce.textContent = s.connEyebrow;
+    if(cb) cb.textContent = s.connBtn;
+  }
+
+  /* ---------------- navigation ---------------- */
+  function setStage(stage){
+    var n = Number(stage);
+    dots.forEach(function(d){ d.classList.toggle('active', Number(d.dataset.stage) === n); });
+    restartBtn.classList.toggle('hidden', n === 0);
+    instructorBtn.classList.toggle('hidden', n === 0 || n === -1);
+  }
+
+  function goto(id, stage){
+    closeTheory();
+    screens.forEach(function(s){ s.classList.remove('active'); });
+    var target = document.getElementById('screen-' + id);
+    if(target){ target.classList.add('active'); }
+    if(Number(stage) !== -1){ lastStage = Number(stage); }
+    setStage(stage);
+    phoneEl.classList.toggle('on-feed', id === 'feed');
+
+    clearTimeout(interceptTimer);
+    interceptOverlay.classList.remove('show');
+    if(id === 'feed'){
+      interceptTimer = setTimeout(function(){ interceptOverlay.classList.add('show'); }, 1100);
+    }
+    /* returning to the picker resets every branch so a re-pick starts fresh */
+    if(id === 'checkin'){
+      document.querySelectorAll('[id^="screen-branch-"]').forEach(function(b){
+        b.classList.remove('revealed');
+        var rb = b.querySelector('[data-action="reveal"]');
+        if(rb) rb.style.display = 'flex';
+        var cb = b.querySelector('.ghost-btn[data-goto]');
+        if(cb) cb.style.display = 'none';
+      });
+      todayNote.textContent = "Today's check-in: —";
+    }
+
+    setAmbience(id);
+
+    clearTimeout(colorTimer); clearTimeout(paxTimer); clearTimeout(paxTimer2);
+    if(homeMockup){ homeMockup.classList.remove('color'); }
+    if(id === 'homescreen'){
+      /* closing beat: the veil is already up, the quote breathes, then it lifts
+         to reveal the grayscale home screen underneath */
+      paxVeil.classList.add('show');
+      paxTimer = setTimeout(function(){ paxVeil.classList.remove('show'); }, 3400);
+      colorTimer = setTimeout(function(){ homeMockup.classList.add('color'); }, 8200);
+    } else {
+      paxVeil.classList.remove('show');
+    }
+  }
+
+  theoryToggle.addEventListener('click', function(){
+    var on = phoneEl.classList.toggle('theory-on');
+    theoryToggle.classList.toggle('on', on);
+    theoryToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+
+  document.querySelectorAll('[data-goto]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(btn.dataset.scenario){ setScenario(btn.dataset.scenario); }
+      if(btn.dataset.label){ todayNote.textContent = "Today's check-in: " + btn.dataset.label; }
+      goto(btn.dataset.goto, btn.dataset.stage);
+    });
+  });
+
+  document.querySelectorAll('[data-action="reveal"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var screen = btn.closest('.screen');
+      screen.classList.add('revealed');
+      btn.style.display = 'none';
+      var cont = screen.querySelector('.ghost-btn[data-goto]');
+      if(cont){ cont.style.display = 'block'; }
+    });
+  });
+
+  instructorBtn.addEventListener('click', function(){
+    if(document.getElementById('screen-instructor').classList.contains('active')){
+      goto('dashboard', lastStage === -1 ? 5 : lastStage);
+    } else {
+      goto('instructor', -1);
+    }
+  });
+
+  if(doubleTapMedia){
+    var lastTap = 0;
+    doubleTapMedia.addEventListener('click', function(){
+      var now = Date.now();
+      if(now - lastTap < 500){
+        heartBurst.classList.remove('burst');
+        void heartBurst.offsetWidth;
+        heartBurst.classList.add('burst');
+      }
+      lastTap = now;
+    });
+  }
+
+  function resetAll(){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('revealed'); });
+    document.querySelectorAll('[data-action="reveal"]').forEach(function(b){ b.style.display = 'flex'; });
+    document.querySelectorAll('.ghost-btn[data-goto]').forEach(function(b){ b.style.display = 'none'; });
+    todayNote.textContent = "Today's check-in: —";
+    lastStage = 1;
+    clearTimeout(paxTimer); clearTimeout(paxTimer2);
+    paxVeil.classList.remove('show');
+    goto('intro', 0);
+  }
+  restartBtn.addEventListener('click', resetAll);
+
+  setScenario('class');
+  goto('intro', 0);
+})();
+</script>
+
+</body>
+</html>
